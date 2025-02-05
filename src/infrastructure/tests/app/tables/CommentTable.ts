@@ -1,6 +1,6 @@
-import {TableFromModel} from '../../../decorators/TableFromModel';
+import {TypeOrmTableFromModel} from '../../../decorators/typeorm/TypeOrmTableFromModel';
 import {CommentModel} from '../models/CommentModel';
 
-@TableFromModel(CommentModel, 'test_comment')
+@TypeOrmTableFromModel(CommentModel, 'test_comment')
 export class CommentTable implements Partial<CommentModel> {
 }

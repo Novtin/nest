@@ -1,6 +1,6 @@
-import {TableFromModel} from '../../../decorators/TableFromModel';
+import {TypeOrmTableFromModel} from '../../../decorators/typeorm/TypeOrmTableFromModel';
 import {UserModel} from '../models/UserModel';
 
-@TableFromModel(UserModel, 'test_user')
+@TypeOrmTableFromModel(UserModel, 'test_user')
 export class UserTable implements Partial<UserModel> {
 }
