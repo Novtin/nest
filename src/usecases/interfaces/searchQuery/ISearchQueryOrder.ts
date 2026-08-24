@@ -1,6 +1,16 @@
 import {IsNestedValue, LiteralUnion, PreviousDepth, Primitive, Unpacked} from './helpers';
 
-/** Field paths for `orderBy` methods. */
+ /**
+ * Field paths for `orderBy` methods.
+ *
+ * Order keys can be:
+ * - a field name, for example `name`
+ * - a root alias field path, for example `model.name`
+ * - a relation field path, for example `author.name` or `author.profile.name`
+ * - an already resolved relation alias path, for example `model_author.name`
+ *
+ * Field path parts can already be wrapped in double quotes.
+ */
 type SearchQueryOrderFieldPath<TModel, TDepth extends number = 5> =
     [TDepth] extends [0]
         ? never
