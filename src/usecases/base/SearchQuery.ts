@@ -8,15 +8,6 @@ import {ISearchQueryOrder, ISearchQueryOrderField, ISearchQueryOrderValue} from 
 import {ISearchQueryRelationOptions, ISearchQueryWithValue} from '../interfaces/searchQuery/ISearchQueryWith';
 import {ISearchQueryWhere} from '../interfaces/searchQuery/ISearchQueryWhere';
 
-/**
- * Order keys can be:
- * - a field name, for example `name`
- * - a root alias field path, for example `model.name`
- * - a relation field path, for example `author.name` or `author.profile.name`
- * - an already resolved relation alias path, for example `model_author.name`
- *
- * Field path parts can already be wrapped in double quotes.
- */
 export const DEFAULT_ALIAS = 'model';
 
 export type {
@@ -313,16 +304,16 @@ export default class SearchQuery<TModel> {
 
         if (!pathToField.length) {
             if (field.split('_')[0] === this._alias) {
-                return wrapInDoubleQuotes(field);
+                return field;
             }
-            return `${wrapInDoubleQuotes(this._alias)}.${wrapInDoubleQuotes(field)}`;
+            return `${this._alias}.${field}`;
         }
 
         if (pathToField.length === 1 && pathToField[0].split('_')[0] === this._alias) {
-            return `${wrapInDoubleQuotes(pathToField[0])}.${wrapInDoubleQuotes(field)}`;
+            return `${pathToField[0]}.${field}`;
         }
 
-        return `${wrapInDoubleQuotes(this.getRelationAlias(pathToField.join('.')))}.${wrapInDoubleQuotes(field)}`;
+        return `${this.getRelationAlias(pathToField.join('.'))}.${field}`;
     }
 
     private resolveOrderByFieldPaths(
