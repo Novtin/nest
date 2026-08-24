@@ -1,5 +1,6 @@
 import {IsNestedValue, LiteralUnion, PreviousDepth, Primitive, Unpacked} from './helpers';
 
+/** Field paths for `orderBy` methods. */
 type SearchQueryOrderFieldPath<TModel, TDepth extends number = 5> =
     [TDepth] extends [0]
         ? never

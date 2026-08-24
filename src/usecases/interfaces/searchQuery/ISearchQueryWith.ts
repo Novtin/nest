@@ -2,6 +2,7 @@ import {IsRelationValue, LiteralUnion, PreviousDepth, Primitive, Unpacked} from 
 
 type RelationIdField<TModel> = keyof TModel & (`${string}Id` | `${string}Ids`);
 
+/** Relation paths for `with` methods. */
 type SearchQueryRelationPath<TModel, TDepth extends number = 5> =
     [TDepth] extends [0]
         ? never

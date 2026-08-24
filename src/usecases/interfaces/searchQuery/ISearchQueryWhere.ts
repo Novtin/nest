@@ -1,6 +1,7 @@
 import {ISearchQueryWithRelation} from './ISearchQueryWith';
 import {IsNestedValue, LiteralUnion, PreviousDepth, Primitive, Unpacked} from './helpers';
 
+/** Field paths for `where` methods. */
 type SearchQueryWhereFieldPath<TModel, TDepth extends number = 5> =
     [TDepth] extends [0]
         ? never
