@@ -1,32 +1,18 @@
-import {IsNestedValue, LiteralUnion, PreviousDepth, Primitive, Unpacked} from './helpers';
-
- /**
- * Field paths for `orderBy` methods.
- *
- * Order keys can be:
- * - a field name, for example `name`
- * - a root alias field path, for example `model.name`
- * - a relation field path, for example `author.name` or `author.profile.name`
- * - an already resolved relation alias path, for example `model_author.name`
- *
- * Field path parts can already be wrapped in double quotes.
- */
-type SearchQueryOrderFieldPath<TModel, TDepth extends number = 5> =
-    [TDepth] extends [0]
-        ? never
-        : TModel extends Primitive | Date | Function | Buffer
-            ? never
-            : {
-                [TKey in keyof TModel & string]:
-                | TKey
-                | (IsNestedValue<TModel[TKey]> extends true
-                    ? `${TKey}.${SearchQueryOrderFieldPath<Unpacked<TModel[TKey]>, PreviousDepth[TDepth] & number>}`
-                    : never)
-            }[keyof TModel & string];
+import {LiteralUnion, ModelFieldPath} from './helpers';
 
 export type ISearchQueryOrderDirection = 'asc' | 'desc';
-export type ISearchQueryOrderField<TModel> = LiteralUnion<SearchQueryOrderFieldPath<TModel>>;
-export type ISearchQueryOrder<TModel = any> = Record<string, ISearchQueryOrderDirection>;
-export type ISearchQueryOrderInput<TModel> = ISearchQueryOrder<TModel>
-    & Partial<Record<SearchQueryOrderFieldPath<TModel>, ISearchQueryOrderDirection>>;
-export type ISearchQueryOrderValue<TModel> = ISearchQueryOrderField<TModel> | ISearchQueryOrderInput<TModel>;
+
+/** A model field path accepted by `orderBy` and `addOrderBy`. */
+export type ISearchQueryOrderField<TModel> = LiteralUnion<ModelFieldPath<TModel>>;
+
+/** Order directions keyed by runtime-resolved query aliases. Returned by `getOrderBy`. */
+export type ISearchQueryResolvedOrder = Record<string, ISearchQueryOrderDirection>;
+
+/** Object form accepted by `orderBy` and `addOrderBy`. */
+export type ISearchQueryOrderObject<TModel> = Partial<Record<
+    ISearchQueryOrderField<TModel>,
+    ISearchQueryOrderDirection
+>>;
+
+/** String or object form accepted by `orderBy` and `addOrderBy`. */
+export type ISearchQueryOrderValue<TModel> = ISearchQueryOrderField<TModel> | ISearchQueryOrderObject<TModel>;

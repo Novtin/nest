@@ -1,6 +1,6 @@
 import {describe, expect, it} from '@jest/globals';
 import SearchQuery from './SearchQuery';
-import {ISearchQueryWithRelationPath} from '../interfaces/searchQuery/ISearchQueryWith';
+import {ModelRelationPath} from '../interfaces/searchQuery/helpers';
 
 class RegionModel {
     id: number;
@@ -82,10 +82,10 @@ describe('SearchQuery type helpers', () => {
             });
 
         expect(searchQuery.getOrderBy()).toEqual({
-            '"model_customer_profile"."city"': 'desc',
-            '"model"."status"': 'asc',
-            '"model_items"."title"': 'desc',
-            '"model_customer_profile_country_region"."name"': 'asc',
+            'model_customer_profile.city': 'desc',
+            'model.status': 'asc',
+            'model_items.title': 'desc',
+            'model_customer_profile_country_region.name': 'asc',
         });
     });
 
@@ -116,14 +116,14 @@ describe('SearchQuery type helpers', () => {
     });
 
     it('does not include JSON objects in with relation path suggestions', () => {
-        const customerRelation: ISearchQueryWithRelationPath<OrderModel> = 'customer';
-        const nestedCustomerRelation: ISearchQueryWithRelationPath<OrderModel> = 'customer.profile';
-        const deepCustomerRelation: ISearchQueryWithRelationPath<OrderModel> = 'customer.profile.country.region';
+        const customerRelation: ModelRelationPath<OrderModel> = 'customer';
+        const nestedCustomerRelation: ModelRelationPath<OrderModel> = 'customer.profile';
+        const deepCustomerRelation: ModelRelationPath<OrderModel> = 'customer.profile.country.region';
 
         // @ts-expect-error JSON object fields should not be suggested as relation paths.
-        const payloadRelation: ISearchQueryWithRelationPath<OrderModel> = 'payload';
+        const payloadRelation: ModelRelationPath<OrderModel> = 'payload';
         // @ts-expect-error Nested JSON object fields should not be suggested as relation paths.
-        const nestedPayloadRelation: ISearchQueryWithRelationPath<OrderModel> = 'payload.metadata';
+        const nestedPayloadRelation: ModelRelationPath<OrderModel> = 'payload.metadata';
 
         expect(customerRelation).toEqual('customer');
         expect(nestedCustomerRelation).toEqual('customer.profile');

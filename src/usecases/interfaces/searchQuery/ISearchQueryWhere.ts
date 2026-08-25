@@ -1,19 +1,5 @@
 import {ISearchQueryWithRelation} from './ISearchQueryWith';
-import {IsNestedValue, LiteralUnion, PreviousDepth, Primitive, Unpacked} from './helpers';
-
-/** Field paths for `where` methods. */
-type SearchQueryWhereFieldPath<TModel, TDepth extends number = 5> =
-    [TDepth] extends [0]
-        ? never
-        : TModel extends Primitive | Date | Function | Buffer
-            ? never
-            : {
-                [TKey in keyof TModel & string]:
-                | TKey
-                | (IsNestedValue<TModel[TKey]> extends true
-                    ? `${TKey}.${SearchQueryWhereFieldPath<Unpacked<TModel[TKey]>, PreviousDepth[TDepth] & number>}`
-                    : never)
-            }[keyof TModel & string];
+import {LiteralUnion, ModelFieldPath} from './helpers';
 
 export type IConditionOperatorSingle = '=' | '>' | '>=' | '=>' | '<' | '<=' | '=<' | 'like' | 'ilike' | 'between'
     | 'in' | 'and' | '&&' | 'or' | '||' | 'not =' | 'not >' | 'not >=' | 'not =>' | 'not <' | 'not <=' | 'not =<'
@@ -28,7 +14,15 @@ export type ICondition = Record<string, unknown>
     | [IConditionOperatorSubquery, string | string[], ICondition]
     | ICondition[];
 
-export type ISearchQueryWhereField<TModel> = LiteralUnion<SearchQueryWhereFieldPath<TModel>>;
+/**
+ * A model field path accepted by `where`, `andWhere`, `orWhere`, and `filterWhere`,
+ * `andFilterWhere`, and `orFilterWhere`.
+ */
+export type ISearchQueryWhereField<TModel> = LiteralUnion<ModelFieldPath<TModel>>;
+/**
+ * Object form accepted by `where`, `andWhere`, `orWhere`, and `filterWhere`,
+ * `andFilterWhere`, and `orFilterWhere`.
+ */
 export type ISearchQueryWhereObject<TModel> =
     | Partial<Record<ISearchQueryWhereField<TModel>, unknown>>
     | Record<string, unknown>;

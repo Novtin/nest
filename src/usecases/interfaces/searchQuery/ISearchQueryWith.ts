@@ -1,31 +1,18 @@
-import {IsRelationValue, LiteralUnion, PreviousDepth, Primitive, Unpacked} from './helpers';
-
-type RelationIdField<TModel> = keyof TModel & (`${string}Id` | `${string}Ids`);
-
-/** Relation paths for `with` methods. */
-type SearchQueryRelationPath<TModel, TDepth extends number = 5> =
-    [TDepth] extends [0]
-        ? never
-        : TModel extends Primitive | Date | Function | Buffer
-            ? never
-            : {
-                [TKey in keyof TModel & string]:
-                | (TKey extends RelationIdField<TModel> ? TKey : never)
-                | (IsRelationValue<TModel[TKey]> extends true
-                    ? TKey | `${TKey}.${SearchQueryRelationPath<Unpacked<TModel[TKey]>, PreviousDepth[TDepth] & number>}`
-                    : never)
-            }[keyof TModel & string];
+import {LiteralUnion, ModelRelationPath} from './helpers';
 
 export type ISearchQueryWithSelect = string | string[];
-export type ISearchQueryWithRelationPath<TModel> = SearchQueryRelationPath<TModel>;
+
+/** A relation path, optionally followed by a relation alias, accepted by `with` and `withNoJoin`. */
 export type ISearchQueryWithRelation<TModel> = LiteralUnion<
-    ISearchQueryWithRelationPath<TModel> | `${ISearchQueryWithRelationPath<TModel>} ${string}`
+    ModelRelationPath<TModel> | `${ModelRelationPath<TModel>} ${string}`
 >;
-export type ISearchQueryWithRelations<TModel> = Record<string, ISearchQueryWithSelect>
-    & Partial<Record<ISearchQueryWithRelationPath<TModel>, ISearchQueryWithSelect>>;
+/** Object form accepted by `with` and `withNoJoin`. */
+export type ISearchQueryWithRelationsObject<TModel> = Record<string, ISearchQueryWithSelect>
+    & Partial<Record<ModelRelationPath<TModel>, ISearchQueryWithSelect>>;
+/** String, array, or object form accepted by `with` and `withNoJoin`. */
 export type ISearchQueryWithValue<TModel> = ISearchQueryWithRelation<TModel>
     | ISearchQueryWithRelation<TModel>[]
-    | ISearchQueryWithRelations<TModel>;
+    | ISearchQueryWithRelationsObject<TModel>;
 export type ISearchQueryRelationOptions = {
     alias: string,
     select: ISearchQueryWithSelect,

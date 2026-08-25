@@ -4,24 +4,23 @@ import {getSchemaSelectOptions} from '../../infrastructure/decorators/schema/Sch
 import {getMetaRelations} from '../../infrastructure/decorators/fields/BaseField';
 import {wrapInDoubleQuotes} from '../utils/wrapInDoubleQuotes';
 import {ISearchQuerySelect} from '../interfaces/searchQuery/ISearchQuerySelect';
-import {ISearchQueryOrder, ISearchQueryOrderField, ISearchQueryOrderValue} from '../interfaces/searchQuery/ISearchQueryOrder';
+import {ISearchQueryResolvedOrder, ISearchQueryOrderObject, ISearchQueryOrderField, ISearchQueryOrderValue} from '../interfaces/searchQuery/ISearchQueryOrder';
 import {ISearchQueryRelationOptions, ISearchQueryWithValue} from '../interfaces/searchQuery/ISearchQueryWith';
 import {ISearchQueryWhere} from '../interfaces/searchQuery/ISearchQueryWhere';
 
 export const DEFAULT_ALIAS = 'model';
 
 export type {
-    ISearchQueryOrder,
+    ISearchQueryResolvedOrder,
+    ISearchQueryOrderObject,
     ISearchQueryOrderDirection,
     ISearchQueryOrderField,
-    ISearchQueryOrderInput,
     ISearchQueryOrderValue,
 } from '../interfaces/searchQuery/ISearchQueryOrder';
 export type {
     ISearchQueryRelationOptions,
     ISearchQueryWithRelation,
-    ISearchQueryWithRelationPath,
-    ISearchQueryWithRelations,
+    ISearchQueryWithRelationsObject,
     ISearchQueryWithSelect,
     ISearchQueryWithValue,
 } from '../interfaces/searchQuery/ISearchQueryWith';
@@ -56,7 +55,7 @@ export default class SearchQuery<TModel> {
 
     protected _condition?: ISearchQueryWhere<TModel>;
 
-    protected _orders?: ISearchQueryOrder<TModel>;
+    protected _orders?: ISearchQueryResolvedOrder;
 
     protected _limit?: number;
 
@@ -319,7 +318,7 @@ export default class SearchQuery<TModel> {
     private resolveOrderByFieldPaths(
         orderValue: ISearchQueryOrderValue<TModel>,
         direction: 'asc' | 'desc',
-    ): ISearchQueryOrder<TModel> {
+    ): ISearchQueryResolvedOrder {
         if (typeof orderValue === 'string') {
             return {
                 [this.resolveOrderByFieldPath(orderValue)]: direction,
