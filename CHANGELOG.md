@@ -1,5 +1,11 @@
 # Steroids Nest Changelog
 
+## [5.2.1](https://github.com/steroids/nest/compare/5.2.0...5.2.1) (2026-08-25)
+
+### Fixes
+
+- Исправлена загрузка миграций на Windows: создание ленивых классов миграций больше не выполняется через генерацию JavaScript-кода, поэтому обратные слэши в путях к файлам обрабатываются корректно.
+
 ## [5.2.0](https://github.com/steroids/nest/compare/5.1.0...5.2.0) (2026-08-14)
 
 ### Features
