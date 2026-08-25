@@ -14,6 +14,6 @@ export type ISearchQueryWithValue<TModel> = ISearchQueryWithRelation<TModel>
     | ISearchQueryWithRelation<TModel>[]
     | ISearchQueryWithRelationsObject<TModel>;
 export type ISearchQueryRelationOptions = {
-    alias: string,
+    alias: string | null,
     select: ISearchQueryWithSelect,
 };
