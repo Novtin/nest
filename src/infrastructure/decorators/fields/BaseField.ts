@@ -1,5 +1,6 @@
 import {applyDecorators} from '@nestjs/common';
 import {ApiProperty} from '@nestjs/swagger';
+import type {ApiPropertyOptions} from '@nestjs/swagger';
 import {ITransformCallback, Transform} from '../Transform';
 import {
     getArrayApiPropertyOptions,
@@ -135,7 +136,7 @@ export function BaseField(
                 required: options.required ?? false,
                 nullable: options.nullable ?? false,
                 ...getArrayApiPropertyOptions(options),
-            }),
+            } as ApiPropertyOptions),
             options.transform && Transform(options.transform),
             ...getRequiredNullableValidators(options),
         ].filter(Boolean),

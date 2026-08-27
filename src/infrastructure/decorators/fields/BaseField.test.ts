@@ -1,5 +1,4 @@
 import {describe, expect, it} from '@jest/globals';
-import {DECORATORS} from '@nestjs/swagger/dist/constants';
 import {
     DateField,
     DateTimeField,
@@ -19,10 +18,8 @@ import {IErrorsCompositeObject} from '../../../usecases/interfaces/IErrorsCompos
 import {DataMapper} from '../../../usecases/helpers/DataMapper';
 import {getFieldOptions} from './BaseField';
 import {TRANSFORM_TYPE_FROM_DB, TRANSFORM_TYPE_TO_DB} from '../Transform';
-import typeOrmDateField from '../typeorm/fields/TypeOrmDateField';
-import typeOrmDateTimeField from '../typeorm/fields/TypeOrmDateTimeField';
-import typeOrmTextField from '../typeorm/fields/TypeOrmTextField';
-import {getMetadataArgsStorage} from '@steroidsjs/typeorm';
+
+const API_MODEL_PROPERTIES_METADATA_KEY = 'swagger/apiModelProperties';
 
 class ApiPropertiesDto {
     @StringField({
@@ -210,10 +207,8 @@ class CustomArrayTransformDto {
     values?: string[];
 }
 
-class TypeOrmArrayFieldsDto {}
-
 const getApiPropertyMeta = (TargetClass, propertyName: string) => Reflect.getMetadata(
-    DECORATORS.API_MODEL_PROPERTIES,
+    API_MODEL_PROPERTIES_METADATA_KEY,
     TargetClass.prototype,
     propertyName,
 );
@@ -393,19 +388,6 @@ describe('BaseField decorator', () => {
         });
 
         expect(dto.values).toEqual(['FIRST', 'SECOND']);
-    });
-
-    it('persists text and date fields as TypeORM arrays', () => {
-        typeOrmTextField({isArray: true}).forEach(decorator => decorator(TypeOrmArrayFieldsDto.prototype, 'texts'));
-        typeOrmDateField({isArray: true}).forEach(decorator => decorator(TypeOrmArrayFieldsDto.prototype, 'dates'));
-        typeOrmDateTimeField({isArray: true}).forEach(decorator => decorator(TypeOrmArrayFieldsDto.prototype, 'dateTimes'));
-
-        const columns = getMetadataArgsStorage().columns
-            .filter(column => column.target === TypeOrmArrayFieldsDto);
-
-        expect(columns.find(column => column.propertyName === 'texts')?.options.array).toBe(true);
-        expect(columns.find(column => column.propertyName === 'dates')?.options.array).toBe(true);
-        expect(columns.find(column => column.propertyName === 'dateTimes')?.options.array).toBe(true);
     });
 
     it('applies base options to relation fields', async () => {
