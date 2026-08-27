@@ -17,7 +17,9 @@ export function getFileFieldDecorators(options: IFileField) {
     const finalOptions: IBaseFieldOptions & IArrayFieldOptions = {
         ...options,
         isArrayConstraintMessage: options.isArrayConstraintMessage
-            || (options.isArray && (options.isImage ? 'Необходимо загрузить изображения' : 'Необходимо загрузить файлы')),
+            || (options.isArray && (options.isImage
+                ? MULTIPLE_IMAGES_DEFAULT_MESSAGE
+                : MULTIPLE_FILES_DEFAULT_MESSAGE)),
     };
 
     return [
@@ -29,7 +31,9 @@ export function getFileFieldDecorators(options: IFileField) {
         ...getArrayValidators(finalOptions),
         !finalOptions.isArray && IsInt({
             message: options.isFileConstraintMessage
-                || (options.isImage ? SINGLE_IMAGE_DEFAULT_MESSAGE : SINGLE_FILE_DEFAULT_MESSAGE),
+                || (options.isImage
+                    ? SINGLE_IMAGE_DEFAULT_MESSAGE
+                    : SINGLE_FILE_DEFAULT_MESSAGE),
         }),
     ].filter(Boolean);
 }

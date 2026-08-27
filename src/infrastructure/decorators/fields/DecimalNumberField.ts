@@ -1,11 +1,11 @@
 import {applyDecorators} from '@nestjs/common';
 import {Max, Min, ValidateBy, ValidationOptions, buildMessage, isDecimal} from 'class-validator';
-import {BaseField, IBaseFieldOptions} from './BaseField';
+import {BaseField, IArrayFieldOptions, IBaseFieldOptions} from './BaseField';
 import {TRANSFORM_TYPE_FROM_DB, Transform, transformValueOrArray} from '../Transform';
 import {DEFAULT_DECIMAL_SCALE} from '../../base/consts';
 import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
-export interface IDecimalNumberFieldOptions extends IBaseFieldOptions {
+export interface IDecimalNumberFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
     precision?: number,
     scale?: number,
     isDecimalConstraintMessage?: string,

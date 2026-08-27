@@ -8,6 +8,11 @@ export const STEROIDS_META_FIELD_OPTIONS = 'steroids_meta_field_options';
 export const STEROIDS_META_FIELD_INTERNAL_OPTIONS = 'steroids_meta_field_internal_options';
 export const STEROIDS_META_KEYS = 'steroids_meta_keys';
 
+export const ARRAY_IS_ARRAY_CONSTRAINT_MESSAGE = 'Значение должно быть массивом';
+export const ARRAY_NOT_EMPTY_CONSTRAINT_MESSAGE = 'Массив не должен быть пустым';
+export const getArrayMinLengthConstraintMessage = (value: number) => `Массив должен содержать не менее ${value} элементов`;
+export const getArrayMaxLengthConstraintMessage = (value: number) => `Массив должен содержать не более ${value} элементов`;
+
 export type AppColumnType = 'boolean' | 'createTime' | 'date' | 'dateTime' | 'decimal' | 'email' | 'enum' | 'file'
     | 'html' | 'integer' | 'password' | 'phone' | 'primaryKey' | 'relation' | 'relationId' | 'string' | 'text'
     | 'time' | 'updateTime' | string;
@@ -213,18 +218,18 @@ export const getArrayValidators = (
 
     return [
         IsArray({
-            message: options.isArrayConstraintMessage || 'Значение должно быть массивом',
+            message: options.isArrayConstraintMessage || ARRAY_IS_ARRAY_CONSTRAINT_MESSAGE,
         }),
         notEmpty && ArrayNotEmpty({
-            message: options.arrayOptions?.notEmptyConstraintMessage || 'Массив не должен быть пустым',
+            message: options.arrayOptions?.notEmptyConstraintMessage || ARRAY_NOT_EMPTY_CONSTRAINT_MESSAGE,
         }),
         typeof minLength === 'number' && ArrayMinSize(minLength, {
             message: getConstraintMessage(options.arrayOptions?.minLength)
-                || `Массив должен содержать не менее ${minLength} элементов`,
+                || getArrayMinLengthConstraintMessage(minLength),
         }),
         typeof maxLength === 'number' && ArrayMaxSize(maxLength, {
             message: getConstraintMessage(options.arrayOptions?.maxLength)
-                || `Массив должен содержать не более ${maxLength} элементов`,
+                || getArrayMaxLengthConstraintMessage(maxLength),
         }),
     ].filter(Boolean);
 };

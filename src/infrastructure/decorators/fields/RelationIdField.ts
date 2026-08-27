@@ -5,11 +5,8 @@ import {Transform, TRANSFORM_TYPE_FROM_DB, TRANSFORM_TYPE_TO_DB} from '../Transf
 import {getTableFromModel} from '../../base/ModelTableStorage';
 import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
-const ARRAY_NOT_EMPTY_DEFAULT_MESSAGE = 'Не должно быть пустым';
-
 export interface IRelationIdFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
     relationName?: string,
-    isFieldValidConstraintMessage?: string,
 }
 
 // From db
@@ -55,8 +52,6 @@ export function RelationIdField(options: IRelationIdFieldOptions = {}) {
     if (!_isBoolean(options.nullable)) {
         options.nullable = true;
     }
-
-    const arrayNotEmptyMessage = options.isFieldValidConstraintMessage || ARRAY_NOT_EMPTY_DEFAULT_MESSAGE;
 
     return applyDecorators(
         ...[
