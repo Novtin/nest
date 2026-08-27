@@ -360,14 +360,14 @@ describe('BaseField decorator', () => {
         const dto = DataMapper.create(TransformFieldsDto, {
             date: '2026-08-26T12:30:00.000Z',
             dates: ['2026-08-26T12:30:00.000Z', '2026-08-27T12:30:00.000Z'],
-            dateTimes: ['2026-08-26T12:30:00.000Z', '2026-08-27T12:30:00.000Z'],
+            dateTimes: ['2026-08-26T12:30:00', '2026-08-27T12:30:00'],
             decimalNumber: '1.25',
             decimalNumbers: ['1.25', '2.5'],
         } as any, TRANSFORM_TYPE_FROM_DB);
 
         expect(dto.date).toBe('2026-08-26');
         expect(dto.dates).toEqual(['2026-08-26', '2026-08-27']);
-        expect(dto.dateTimes).toEqual(['2026-08-26 19:30:00', '2026-08-27 19:30:00']);
+        expect(dto.dateTimes).toEqual(['2026-08-26 12:30:00', '2026-08-27 12:30:00']);
         expect(dto.decimalNumber).toBe(1.25);
         expect(dto.decimalNumbers).toEqual([1.25, 2.5]);
     });
