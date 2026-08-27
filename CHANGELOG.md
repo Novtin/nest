@@ -7,6 +7,67 @@
 - Инициализация Sentry удалена из `BaseApplication`, теперь нужно инициализировать в проекте до импорта NestJS
 - Поля `sentry.dsn` и `sentry.environment` удалены из конфигурации приложения. Nest-интеграция и HTTP-фильтр подключаются только для инициализированного клиента Sentry.
 
+## [5.2.1](https://github.com/steroids/nest/compare/5.2.0...5.2.1) (2026-08-25)
+
+### Fixes
+
+- Исправлена загрузка миграций на Windows: создание ленивых классов миграций больше не выполняется через генерацию JavaScript-кода, поэтому обратные слэши в путях к файлам обрабатываются корректно.
+
+## [5.2.0](https://github.com/steroids/nest/compare/5.1.0...5.2.0) (2026-08-14)
+
+### Features
+
+- Field-декораторы получили единообразную поддержку пользовательских сообщений валидации. Добавлены options `isNotEmptyConstraintMessage`, `isBooleanConstraintMessage`, `isStringConstraintMessage`, `isEmailConstraintMessage`, `isFileConstraintMessage` и `isHhMmTimeConstraintMessage` для соответствующих validation constraints.
+- `DateField` теперь позволяет переопределить сообщения `IsISO8601`, `MinDate` и `MaxDate`; для минимальной и максимальной даты поддерживаются как строки, так и callback-функции.
+- Для `DecimalNumberField` добавлен отдельный публичный интерфейс `IDecimalNumberFieldOptions` с настройками точности, масштаба и сообщений валидации.
+
+### Fixes
+
+- `DataMapper` теперь вычисляет computable-поля при маппинге данных из БД и при других преобразованиях, кроме преобразования в БД.
+- `SearchQuery.orderBy` и `addOrderBy` больше не оборачивают alias и поля в двойные кавычки, что исправляет ошибку `""model"" alias was not found` при сортировке с join и paginate.
+- `IntegerField` и `TextField` теперь используют переданные пользовательские сообщения для ограничений `min` и `max`; для строковых ограничений добавлены корректные сообщения по умолчанию.
+- Исправлено имя constraint в валидаторе `MaxDate`: ошибки максимальной даты теперь идентифицируются как `maxDate`, а не `minDate`.
+- Из `UpdateTimeField` удалён лишний validation constraint `IsString`.
+
+### Tests
+
+- Добавлены unit-тесты Field-декораторов, проверяющие стандартные и пользовательские сообщения всех затронутых validation constraints.
+
+## [5.1.0](https://github.com/steroids/nest/compare/5.0.3...5.1.0) (2026-08-11)
+
+[Migration guide](docs/MigrationGuide.md#510-2026-08-11)
+
+### Changed
+
+- Добавлена одновременная поддержка NestJS 10 и NestJS 11 в `peerDependencies` для `@nestjs/cli`, `@nestjs/common`, `@nestjs/core` и `@nestjs/platform-express`; диапазон `@nestjs/swagger` обновлён до `^8.1.1 || ^11.0.0`.
+- Среда разработки обновлена до NestJS 11, Swagger 11 и типов Express 5.
+- `RestApplication` теперь создаёт `NestExpressApplication` и настраивает JSON и URL-encoded body parsers через `useBodyParser`, используя реализацию из установленного `@nestjs/platform-express`.
+- `RestApplication` явно включает расширенный Express query parser, сохраняя поддержку вложенных query-параметров при использовании Express 5, где по умолчанию применяется упрощённый parser.
+- `DataMapper.exportModels` больше не читает закрытые metadata-константы Swagger: `label` и `required` экспортируются непосредственно из options Field-декораторов.
+
+### Removed
+
+- Удалены прямые runtime-зависимости от `express` и `body-parser`. Версия Express и реализация body parser теперь определяются установленной версией `@nestjs/platform-express`: Express 4 для NestJS 10 и Express 5 для NestJS 11.
+- Удалено использование закрытого импорта `@nestjs/swagger/dist/constants`, который недоступен в Swagger 11 через package exports.
+- Упрощён интерфейс `IModule`: удалено неиспользуемое наследование от `ModuleMetadata`.
+
+### Chores
+
+- Обновлены runtime-зависимости `lodash` и `pg`, а также инструменты разработки: Jest, типы Node.js и Lodash, `ts-jest`, `ts-node` и `@steroidsjs/eslint-config`.
+- Добавлена команда `yarn lint`, обновлена конфигурация ESLint и исправлены типы для совместимости с обновлёнными зависимостями, включая type-only импорты Express.
+
+## [5.0.3](https://github.com/steroids/nest/compare/5.0.2...5.0.3) (2026-07-30)
+
+### Fixed
+
+- `migrate:generate` теперь создаёт миграции для entity из npm-пакетов в локальном модуле проекта, зарегистрированном через `ModuleHelper`, а не внутри соответствующей зависимости в `node_modules`.
+
+## [5.0.2](https://github.com/steroids/nest/compare/5.0.1...5.0.2) (2026-07-30)
+
+### Fixed
+
+- `RelationField` теперь передаёт тип связи в Swagger через lazy resolver, предотвращая ошибку `A circular dependency has been detected` для двунаправленных связей.
+
 ## [5.0.1](https://github.com/steroids/nest/compare/5.0.0...5.0.1) (2026-07-23)
 
 ### Changed
