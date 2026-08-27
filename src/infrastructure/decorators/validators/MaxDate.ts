@@ -1,16 +1,18 @@
 import {registerDecorator, ValidationArguments, ValidationOptions} from 'class-validator';
 import {normalizeDate, normalizeFunctionDate} from '../fields/DateField';
 
-export function MaxDate(maxDate: string | Date | Function, validationOptions?: ValidationOptions) {
-    return function (object: Object, propertyName: string) {
+type MaxDateFunction = () => Date;
+
+export function MaxDate(maxDate: string | Date | MaxDateFunction, validationOptions?: ValidationOptions) {
+    return (object: Record<string, any>, propertyName: string) => {
         registerDecorator({
-            name: 'minDate',
+            name: 'maxDate',
             target: object.constructor,
             propertyName,
             constraints: [maxDate],
             options: validationOptions,
             validator: {
-                validate: function (value: any, args: ValidationArguments) {
+                validate (value: any, args: ValidationArguments) {
                     return new Date(normalizeDate(value)) <= new Date(normalizeFunctionDate(args.constraints[0], args));
                 },
             },

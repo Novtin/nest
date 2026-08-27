@@ -7,6 +7,8 @@ import {MinDate} from '../validators/MinDate';
 import {MaxDate} from '../validators/MaxDate';
 import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
+type DateFunction = () => Date;
+
 export const normalizeDate = (rawValue) => {
     if (!rawValue) {
         return rawValue;
@@ -32,9 +34,18 @@ export const normalizeFunctionDate = (value, args?: ValidationArguments) => {
     return normalizeDate(value);
 };
 
+const IS_ISO_8601_DEFAULT_MESSAGE = 'Некорректный формат даты';
+const MIN_DATE_DEFAULT_MESSAGE_PREFIX = 'Выбрана дата раньше минимально допустимой';
+const MAX_DATE_DEFAULT_MESSAGE_PREFIX = 'Выбрана дата позже максимально допустимой';
+
+type DateConstraintMessage = string | ((args: ValidationArguments) => string);
+
 export interface IDateFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
-    minDate?: string | Date | Function,
-    maxDate?: string | Date | Function,
+    minDate?: string | Date | DateFunction,
+    maxDate?: string | Date | DateFunction,
+    minDateConstraintMessage?: DateConstraintMessage,
+    maxDateConstraintMessage?: DateConstraintMessage,
+    isISO8601ConstraintMessage?: string,
 }
 
 export function DateField(options: IDateFieldOptions = {}) {
@@ -50,15 +61,17 @@ export function DateField(options: IDateFieldOptions = {}) {
             Transform(({value}) => transformValueOrArray(value, normalizeDate), TRANSFORM_TYPE_TO_DB),
             options.minDate && MinDate(options.minDate, {
                 each: options.isArray,
-                message: (args) => `Выбрана дата раньше минимально допустимой (${normalizeFunctionDate(options.minDate, args)})`,
+                message: options.minDateConstraintMessage
+                    || ((args) => `${MIN_DATE_DEFAULT_MESSAGE_PREFIX} (${normalizeFunctionDate(options.minDate, args)})`),
             }),
             options.maxDate && MaxDate(options.maxDate, {
                 each: options.isArray,
-                message: (args) => `Выбрана дата позже максимально допустимой (${normalizeFunctionDate(options.maxDate, args)})`,
+                message: options.maxDateConstraintMessage
+                    || ((args) => `${MAX_DATE_DEFAULT_MESSAGE_PREFIX} (${normalizeFunctionDate(options.maxDate, args)})`),
             }),
             IsISO8601({}, {
                 each: options.isArray,
-                message: 'Некорректный формат даты',
+                message: options.isISO8601ConstraintMessage || IS_ISO_8601_DEFAULT_MESSAGE,
             }),
         ].filter(Boolean),
     );

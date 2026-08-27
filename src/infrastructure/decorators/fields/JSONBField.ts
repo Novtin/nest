@@ -1,11 +1,11 @@
 import {applyDecorators} from '@nestjs/common';
-import {ApiPropertyOptions} from '@nestjs/swagger';
 import {BaseField, IArrayFieldOptions, IBaseFieldOptions} from './BaseField';
 import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
+import type {ISwaggerFieldType} from './helpers/InternalFieldMetadataHelpers';
 
 export interface IJSONBFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
     // Use to manually define a field type in Swagger.
-    swaggerType?: ApiPropertyOptions['type'];
+    swaggerType?: ISwaggerFieldType,
 }
 
 export function JSONBField(options: IJSONBFieldOptions = {}) {

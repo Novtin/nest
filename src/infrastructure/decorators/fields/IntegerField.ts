@@ -5,6 +5,10 @@ import {BaseField, IArrayFieldOptions, IBaseFieldOptions} from './BaseField';
 import {Transform, transformValueOrArray} from '../Transform';
 import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
+const IS_INT_DEFAULT_MESSAGE = 'Должно быть числом';
+const buildMinIntDefaultMessage = (min: number) => `Должно быть не меньше ${min}`;
+const buildMaxIntDefaultMessage = (max: number) => `Должно быть не больше ${max}`;
+
 export interface IIntegerFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
     unique?: boolean,
     isIntConstraintMessage?: string,
@@ -26,16 +30,16 @@ export function IntegerField(options: IIntegerFieldOptions = {}) {
             ? _toInteger(item)
             : null)),
         IsInt({
-            message: options.isIntConstraintMessage || 'Должно быть числом',
+            message: options.isIntConstraintMessage || IS_INT_DEFAULT_MESSAGE,
             each: options.isArray,
         }),
         typeof options.min === 'number' && Min(options.min, {
             each: options.isArray,
-            message: `Должно быть не меньше ${options.min}` || options.minIntConstraintMessage,
+            message: options.minIntConstraintMessage || buildMinIntDefaultMessage(options.min),
         }),
         typeof options.max === 'number' && Max(options.max, {
             each: options.isArray,
-            message: `Должно быть не больше ${options.max}` || options.maxIntConstraintMessage,
+            message: options.maxIntConstraintMessage || buildMaxIntDefaultMessage(options.max),
         }),
     ].filter(Boolean));
 }

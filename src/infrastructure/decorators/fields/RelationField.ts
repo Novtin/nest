@@ -49,13 +49,11 @@ export type IRelationFieldOptions = IRelationFieldOneToOneOptions | IRelationFie
 
 const PROPERTY_TMP_ID_ENTITY = '__tmpIdEntity';
 
-export const getMetaRelationIdFieldKey = (relationClass, relationName): string => {
-    return getMetaFields(relationClass)
-        .find(idName => {
-            const idOptions = getFieldOptions(relationClass, idName);
-            return getFieldAppType(relationClass, idName) === 'relationId' && idOptions.relationName === relationName;
-        });
-}
+export const getMetaRelationIdFieldKey = (relationClass, relationName): string => getMetaFields(relationClass)
+    .find(idName => {
+        const idOptions = getFieldOptions(relationClass, idName);
+        return getFieldAppType(relationClass, idName) === 'relationId' && idOptions.relationName === relationName;
+    })
 
 const transformInstances = (TargetClass, value, isArray, transformType) => {
     if (isArray && Array.isArray(value)) {
@@ -111,6 +109,8 @@ export const relationTransformToDb = ({value, item, key, options, transformType}
 
         return result;
     }
+
+    return value;
 };
 
 export const relationTransform = ({value, options, transformType}) => {
@@ -131,7 +131,9 @@ export function RelationField(options: IRelationFieldOptions) {
             BaseField(fieldOptions, {
                 decoratorName: 'RelationField',
                 appType: 'relation',
-                swaggerType: options.relationClass(),
+                swaggerType: function type() {
+                    return options.relationClass();
+                },
             }),
             ...getArrayValidators(fieldOptions),
             //options.type === 'ManyToOne' && JoinColumn(),

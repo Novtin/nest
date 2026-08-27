@@ -5,14 +5,16 @@ import {BaseField, IArrayFieldOptions, IBaseFieldOptions} from './BaseField';
 import BaseEnum from '../../../domain/base/BaseEnum';
 import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
+const IS_ENUM_DEFAULT_MESSAGE = 'Выберите одно из значений';
+
 export interface IEnumFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
     enum: object | string[] | any,
-    enumName?: string;
+    enumName?: string,
     isEnumConstraintMessage?: string,
 }
 
 type BaseEnumClass<T extends BaseEnum = BaseEnum> = {
-    new (): T;
+    new (): T,
 } & typeof BaseEnum;
 
 function getOpenApiEnum(enumEntity: string[] | object | BaseEnumClass): string[] {
@@ -65,7 +67,7 @@ export function EnumField(options: IEnumFieldOptions) {
             getValidatorEnum(options.enum),
             {
                 each: options.isArray,
-                message: options.isEnumConstraintMessage || 'Выберите одно из значений',
+                message: options.isEnumConstraintMessage || IS_ENUM_DEFAULT_MESSAGE,
             },
         ),
     ].filter(Boolean));

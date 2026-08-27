@@ -52,7 +52,13 @@ export interface IBaseFieldOptions {
      * If this flag is set, the field will not be present in the database
      */
     noColumn?: boolean,
+    /**
+     * Custom validation message for the IsNotEmpty constraint (when `required` is true)
+     */
+    isNotEmptyConstraintMessage?: string,
 }
+
+const IS_NOT_EMPTY_DEFAULT_MESSAGE = 'Обязательно для заполнения';
 
 export type IConstraintOption<T> = T | {
     value: T,
@@ -141,6 +147,7 @@ export {
     IFieldInternalOptions,
     IFieldOptions,
     IRelationData,
+    ISwaggerFieldType,
     STEROIDS_META_FIELD_INTERNAL_OPTIONS,
     STEROIDS_META_FIELD_OPTIONS,
     STEROIDS_META_KEYS,

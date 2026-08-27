@@ -3,6 +3,8 @@ import {IsPhoneNumber} from 'class-validator';
 import {BaseField, IBaseFieldOptions} from './BaseField';
 import {Transform} from '../Transform';
 
+const IS_PHONE_NUMBER_DEFAULT_MESSAGE = 'Некорректный номер телефона';
+
 export interface IPhoneFieldOptions extends IBaseFieldOptions {
     unique?: boolean,
     constraintMessage?: string,
@@ -30,7 +32,7 @@ export function PhoneField(options: IPhoneFieldOptions = {}) {
             }),
             Transform(({value}) => normalizePhone(value)),
             IsPhoneNumber(null, {
-                message: options.constraintMessage || 'Некорректный номер телефона',
+                message: options.constraintMessage || IS_PHONE_NUMBER_DEFAULT_MESSAGE,
             }),
         ].filter(Boolean),
     );

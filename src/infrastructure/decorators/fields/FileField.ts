@@ -3,8 +3,14 @@ import {IsInt} from 'class-validator';
 import {BaseField, IArrayFieldOptions, IBaseFieldOptions} from './BaseField';
 import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
+const SINGLE_FILE_DEFAULT_MESSAGE = 'Необходимо загрузить файл';
+const MULTIPLE_FILES_DEFAULT_MESSAGE = 'Необходимо загрузить файлы';
+const SINGLE_IMAGE_DEFAULT_MESSAGE = 'Необходимо загрузить изображение';
+const MULTIPLE_IMAGES_DEFAULT_MESSAGE = 'Необходимо загрузить изображения';
+
 export interface IFileField extends IBaseFieldOptions, IArrayFieldOptions {
     isImage?: boolean,
+    isFileConstraintMessage?: string,
 }
 
 export function getFileFieldDecorators(options: IFileField) {
@@ -22,7 +28,8 @@ export function getFileFieldDecorators(options: IFileField) {
         }),
         ...getArrayValidators(finalOptions),
         !finalOptions.isArray && IsInt({
-            message: options.isImage ? 'Необходимо загрузить изображение' : 'Необходимо загрузить файл',
+            message: options.isFileConstraintMessage
+                || (options.isImage ? SINGLE_IMAGE_DEFAULT_MESSAGE : SINGLE_FILE_DEFAULT_MESSAGE),
         }),
     ].filter(Boolean);
 }
