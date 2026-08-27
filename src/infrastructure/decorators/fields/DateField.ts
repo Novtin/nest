@@ -1,10 +1,11 @@
 import {applyDecorators} from '@nestjs/common';
 import {IsISO8601, ValidationArguments} from 'class-validator';
 import {formatISO9075, parseISO} from 'date-fns';
-import {BaseField, IBaseFieldOptions} from './BaseField';
-import {Transform, TRANSFORM_TYPE_FROM_DB, TRANSFORM_TYPE_TO_DB} from '../Transform';
+import {BaseField, IArrayFieldOptions, IBaseFieldOptions} from './BaseField';
+import {Transform, transformValueOrArray, TRANSFORM_TYPE_FROM_DB, TRANSFORM_TYPE_TO_DB} from '../Transform';
 import {MinDate} from '../validators/MinDate';
 import {MaxDate} from '../validators/MaxDate';
+import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
 export const normalizeDate = (rawValue) => {
     if (!rawValue) {
@@ -31,7 +32,7 @@ export const normalizeFunctionDate = (value, args?: ValidationArguments) => {
     return normalizeDate(value);
 };
 
-export interface IDateFieldOptions extends IBaseFieldOptions {
+export interface IDateFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
     minDate?: string | Date | Function,
     maxDate?: string | Date | Function,
 }
@@ -44,8 +45,9 @@ export function DateField(options: IDateFieldOptions = {}) {
                 appType: 'date',
                 swaggerType: 'string',
             }),
-            Transform(({value}) => normalizeDate(value), TRANSFORM_TYPE_FROM_DB),
-            Transform(({value}) => normalizeDate(value), TRANSFORM_TYPE_TO_DB),
+            ...getArrayValidators(options),
+            Transform(({value}) => transformValueOrArray(value, normalizeDate), TRANSFORM_TYPE_FROM_DB),
+            Transform(({value}) => transformValueOrArray(value, normalizeDate), TRANSFORM_TYPE_TO_DB),
             options.minDate && MinDate(options.minDate, {
                 each: options.isArray,
                 message: (args) => `Выбрана дата раньше минимально допустимой (${normalizeFunctionDate(options.minDate, args)})`,
@@ -55,6 +57,7 @@ export function DateField(options: IDateFieldOptions = {}) {
                 message: (args) => `Выбрана дата позже максимально допустимой (${normalizeFunctionDate(options.maxDate, args)})`,
             }),
             IsISO8601({}, {
+                each: options.isArray,
                 message: 'Некорректный формат даты',
             }),
         ].filter(Boolean),

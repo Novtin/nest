@@ -2,7 +2,7 @@ import {applyDecorators} from '@nestjs/common';
 import {ApiProperty} from '@nestjs/swagger';
 import {ITransformCallback, Transform} from '../Transform';
 import {
-    getArrayValidators,
+    getArrayApiPropertyOptions,
     getRequiredNullableValidators,
     STEROIDS_META_FIELD_INTERNAL_OPTIONS,
     STEROIDS_META_FIELD_OPTIONS,
@@ -33,30 +33,6 @@ export interface IBaseFieldOptions {
      */
     nullable?: boolean,
     /**
-     * Flag indicating whether the field is an array
-     */
-    isArray?: boolean,
-    /**
-     * Custom constraint message for `isArray`
-     */
-    isArrayConstraintMessage?: string,
-    /**
-     * Minimum array length
-     */
-    arrayMinLength?: number,
-    /**
-     * Custom constraint message for `arrayMinLength`
-     */
-    arrayMinLengthConstraintMessage?: string,
-    /**
-     * Maximum array length
-     */
-    arrayMaxLength?: number,
-    /**
-     * Custom constraint message for `arrayMaxLength`
-     */
-    arrayMaxLengthConstraintMessage?: string,
-    /**
      * Minimum value
      */
     min?: number,
@@ -76,6 +52,45 @@ export interface IBaseFieldOptions {
      * If this flag is set, the field will not be present in the database
      */
     noColumn?: boolean,
+}
+
+export type IConstraintOption<T> = T | {
+    value: T,
+    constraintMessage?: string,
+};
+
+export interface IArrayOptions {
+    /**
+     * Minimum array length.
+     */
+    minLength?: IConstraintOption<number>,
+    /**
+     * Maximum array length.
+     */
+    maxLength?: IConstraintOption<number>,
+    /**
+     * Flag indicating whether an empty array is forbidden.
+     */
+    notEmpty?: boolean,
+    /**
+     * Custom constraint message for `notEmpty`.
+     */
+    notEmptyConstraintMessage?: string,
+}
+
+export interface IArrayFieldOptions {
+    /**
+     * Flag indicating whether the field is an array.
+     */
+    isArray?: boolean,
+    /**
+     * Custom constraint message for `isArray`.
+     */
+    isArrayConstraintMessage?: string,
+    /**
+     * Array-specific validation options.
+     */
+    arrayOptions?: IArrayOptions,
 }
 
 const ColumnMetaDecorator = (options: IFieldOptions, internalOptions: IFieldInternalOptions) => (object, propertyName) => {
@@ -100,7 +115,10 @@ const ColumnMetaDecorator = (options: IFieldOptions, internalOptions: IFieldInte
  * `STEROIDS_META_FIELD_INTERNAL_OPTIONS`.
  * Examples: `appType`, `decoratorName`, `swaggerType`.
  */
-export function BaseField(options: IBaseFieldOptions = {}, internalOptions: IFieldInternalOptions = {}) {
+export function BaseField(
+    options: IBaseFieldOptions & Partial<IArrayFieldOptions> = {},
+    internalOptions: IFieldInternalOptions = {},
+) {
     return applyDecorators(
         ...[
             ColumnMetaDecorator(options, internalOptions),
@@ -108,13 +126,12 @@ export function BaseField(options: IBaseFieldOptions = {}, internalOptions: IFie
                 type: internalOptions.swaggerType,
                 description: options.label || undefined,
                 example: options.example || undefined,
-                required: options.required,
-                isArray: options.isArray,
-                nullable: options.nullable,
+                required: options.required ?? false,
+                nullable: options.nullable ?? false,
+                ...getArrayApiPropertyOptions(options),
             }),
             options.transform && Transform(options.transform),
             ...getRequiredNullableValidators(options),
-            ...getArrayValidators(options),
         ].filter(Boolean),
     );
 }

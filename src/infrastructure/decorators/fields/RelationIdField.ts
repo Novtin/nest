@@ -1,10 +1,11 @@
 import {applyDecorators} from '@nestjs/common';
 import {isBoolean as _isBoolean} from 'lodash';
-import {BaseField, getFieldOptions, getMetaPrimaryKey, IBaseFieldOptions} from './BaseField';
+import {BaseField, getFieldOptions, getMetaPrimaryKey, IArrayFieldOptions, IBaseFieldOptions} from './BaseField';
 import {Transform, TRANSFORM_TYPE_FROM_DB, TRANSFORM_TYPE_TO_DB} from '../Transform';
 import {getTableFromModel} from '../../base/ModelTableStorage';
+import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
-export interface IRelationIdFieldOptions extends IBaseFieldOptions {
+export interface IRelationIdFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
     relationName?: string,
     isFieldValidConstraintMessage?: string,
 }
@@ -60,6 +61,7 @@ export function RelationIdField(options: IRelationIdFieldOptions = {}) {
                 appType: 'relationId',
                 swaggerType: 'number',
             }),
+            ...getArrayValidators(options),
             Transform(relationTransformFromDb, TRANSFORM_TYPE_FROM_DB),
             Transform(relationTransformToDb, TRANSFORM_TYPE_TO_DB),
         ].filter(Boolean),

@@ -5,15 +5,24 @@
 [Migration guide](docs/MigrationGuide.md#unreleased)
 
 ### Changed
-- Обработка `required`, `nullable` и `isArray` для Field-декораторов централизована в `BaseField`: Swagger metadata и базовые валидаторы теперь формируются единообразно для всех полей.
-- `ApiProperty.required` теперь заполняется из `options.required`, а `ApiProperty.nullable` - из `options.nullable`.
-- Из конкретных Field-декораторов удалены дублирующие `ValidateIf`, `IsOptional` и array-валидаторы, которые отвечали за общую nullable/required/isArray-логику.
-- `FileField` и `ImageField` теперь используют общую опцию `isArray` вместо отдельной опции `multiple`.
+
+- Обработка `required` и `nullable` унифицирована во всех Field-декораторах. В Swagger они явно передаются как `required: false` и `nullable: false`, если options не заданы.
+- Поддержка `isArray` теперь объявлена только в Field-декораторах, которые её реализуют. Для них добавлена проверка типа массива и корректные OpenAPI metadata.
+- `FileField` и `ImageField` используют `isArray` вместо `multiple`.
 
 ### Features
-- В Field options добавлены `isArrayConstraintMessage`, `arrayMinLength`, `arrayMaxLength`, `arrayMinLengthConstraintMessage` и `arrayMaxLengthConstraintMessage` для настройки общей валидации массивов.
+
+- В поддерживаемых `isArray` полях добавлены `arrayOptions`: `notEmpty`, `minLength` и `maxLength`, включая настройку сообщений валидации и OpenAPI `minItems` / `maxItems`.
+- В `StringField` и `TextField` добавлена опция `notEmpty` для проверки пустой строки без запрета `null` и `undefined`.
+- `DateTimeField` поддерживает `isArray`.
+
+### Fixes
+
+- Преобразования значений в `DateField`, `DateTimeField` и `DecimalNumberField` теперь выполняются для каждого элемента массива.
+- В `StringField` регулярное выражение при `isArray: true` проверяется для каждого элемента массива.
 
 ### Removed
+
 - Удалена опция `multiple` из `FileField` и `ImageField`.
 
 ## [4.4.0](https://github.com/steroids/nest/compare/4.3.0...4.4.0) (2026-05-14)
@@ -21,51 +30,62 @@
 [Migration guide](docs/MigrationGuide.md#440-2026-05-14)
 
 ### Features
+
 - Добавлена middleware `cookie-parser`, для удобной работы с куками (инициализируется в методе `RestApplication.initCookieParser`)
 - Добавлено поле `IRestAppModuleConfig.cookieSecret` для возможности подписи кук
 - `CreateDtoPipe` теперь принимает `itemMetatype` и умеет создавать DTO для элементов массива при локальном подключении pipe ([#180](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/180))
 
 ### Changed
+
 - `DateTimeField` теперь по умолчанию сохраняет секунды при нормализации даты и времени. Для старого поведения нужно передать `skipSeconds: true`.
 - Упорядочены options и metadata Field-декораторов: пользовательские options отделены от внутренних `appType`, `decoratorName` и `swaggerType`.
 - Служебные хелперы для чтения metadata Field-декораторов вынесены в `fields/helpers/InternalFieldMetadataHelpers`.
 - `RelationField` теперь сам определяет `isArray` по типу связи.
 
 ### Fixes
+
 - `SearchQuery.orderBy` и `addOrderBy` теперь нормализуют поля сортировки, корректно обрабатывают alias, relation paths и поля, уже обернутые в двойные кавычки ([#210](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/210))
 
 ### Removed
+
 - Из публичных options Field-декораторов удалены `jsType`, `dbType`, `plainName` и `hint`.
 - Публичный `swaggerType` оставлен только в `ComputableField`, `JSONBField` и `GeometryField`.
 
 ### Chores
+
 - Добавлен `postinstall`-скрипт для очистки Jest cache после установки зависимостей.
 
 ## [4.3.0](https://github.com/steroids/nest/compare/4.2.1...4.3.0) (2026-05-04)
 
 ### Features
+
 - В `CrudService.save` при обновлении модели теперь подгружаются релейшены и для saveDto, которые не являются экземпляром класса со steroids fields ([#225](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/225))
 - `DataMapper` теперь приводит одиночное значение к массиву для полей с опцией `isArray` ([#248](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/248))
 
 ### Fixes
+
 - Исправлена настройка глобального префикса REST-приложения при включенном URI versioning ([#234](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/234))
 - Sentry инициализируется только при наличии DSN, а `SentryExceptionFilter` подключается только при наличии клиента Sentry ([#254](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/254))
 - Короткие алиасы `SearchQuery` теперь формируются через хеш пути связи, что предотвращает коллизии ([#228](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/2228))
 
 ### Deprecated
+
 - `UserException` и `UserExceptionFilter` помечены как deprecated ([#233](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/233))
 
 ### Removed
+
 - Удалена CLI-команда `migrate:generate-permissions` и вспомогательная логика генерации миграций по permissions ([#247](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/247))
 
 ### CI
+
 - Добавлена GitHub Actions проверка заголовков pull request на соответствие conventional commits ([#178](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/178))
 
 ## [4.2.1](https://github.com/steroids/nest/compare/4.2.0...4.2.1) (2026-04-08)
 
 ### Fixes
+
 - Параметр logger для метода NestFactory.create вынесен в конфиг как loggerLevels ([#241](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/241))
-- Инициализация свойства RestApplication._app вынесена в метод createApp ([#241](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/241))
+- Инициализация свойства RestApplication.\_app вынесена в метод createApp ([#241](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/241))
 
 ## [4.2.0](https://github.com/steroids/nest/compare/4.1.0...4.2.0) (2026-04-02)
 
@@ -78,12 +98,15 @@
 - Добавлен параметр `isListenLocalhost` в `RestApplication` для прослушивания только localhost'а, env-переменная для него - `APP_LISTEN_LOCALHOST` ([#215](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/215))
 
 ### Fixes
+
 - Фикс поведения UpdateTimeField (дубль подписки на BEFORE_INSERT заменен на BEFORE_UPDATE)
 
 ## [4.1.0](https://github.com/steroids/nest/compare/4.0.4...4.1.0) (2026-02-13)
+
 ## [4.0.4](https://github.com/steroids/nest/compare/4.0.3...4.0.4) (2026-02-09)
 
 ### Fixes
+
 - Команда cli entity:generate теперь не пересоздает файлы сущностей если они уже есть в проекте
 - Исправлены импорты в шаблонах используемых в команде cli entity:generate
 
@@ -97,17 +120,19 @@
 
 - Добавлена проверка есть ли не примененные миграции при старте команды migrate:generate ([#171](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/171))
 - В пайплайн выгрузки добавлен запуск тестов ([#197](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/197))
-- Добавлена CLI команда ```migrate:generate-permissions``` для генерации миграций по добавлению новых пермишенов ([#156](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/156))
+- Добавлена CLI команда `migrate:generate-permissions` для генерации миграций по добавлению новых пермишенов ([#156](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/156))
 - Из текста ошибок, возвращаемых клиенту, по-умолчанию убрано подробное описание. Старое поведение включается по переменной окружение SENTRY_EXPOSE_ERROR_RESPONSE ([#129](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/129))
 - Для ComputableField добавлен параметр swaggerType ([#201](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/201))
 
 ### Fixes
+
 - Тесты в ModelTest.test приведены в актуальное состояние ([#197](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/197))
 - Исправлена валидация чисел в DecimalField ([#204](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/204))
 
 ## [4.0.2](https://github.com/steroids/nest/compare/4.0.1...4.0.2) (2026-01-20)
 
 ### Fixes
+
 - Исправлен тип openApi для EnumField - добавлено отображение параметра isArray
 
 ## [4.0.1](https://github.com/steroids/nest/compare/4.0.0...4.0.1) (2026-01-20)
@@ -117,6 +142,7 @@
 - Добавлена возможность использовать регулярные выражения в декораторе StringField
 
 ### Fixes
+
 - Исправлен тип openApi для EnumField - вместо ключей словаря отображаются значения
 
 ## [4.0.0](https://github.com/steroids/nest/compare/3.2.7...4.0.0) (2026-01-19)
@@ -130,16 +156,18 @@
 ## [3.2.8](https://github.com/steroids/nest/compare/3.2.7...3.2.8) (2026-01-14)
 
 ### Fixes
+
 - Исправлена валидация чисел в DecimalField
 
 ## [3.2.7](https://github.com/steroids/nest/compare/3.2.6...3.2.7) (2025-12-25)
 
 ### Features
 
-- Добавлен ApiOkAutocompleteResponse декоратор 
+- Добавлен ApiOkAutocompleteResponse декоратор
 - В параметры метода fillQueryFromSearchDto из ReadService добавлен context
 
 ### Fixes
+
 - Исправлены типы openApi для EnumField и JSONBField
 
 ## [3.2.6](https://github.com/steroids/nest/compare/3.2.5...3.2.6) (2025-09-18)
@@ -153,52 +181,52 @@
 
 ### Features
 
--  Для команды migrate:revert добавлена поддержка параметра count - количество откатываемых миграций
+- Для команды migrate:revert добавлена поддержка параметра count - количество откатываемых миграций
 - Поддержка параметра isArray для DecimalField, DecimalNumberField и IntegerField
-- Для класса BaseEnum добавлен метод includesKey 
+- Для класса BaseEnum добавлен метод includesKey
 
 ### Fixes
 
--  Исправлен интерфейс ISearchQueryConfig.onGetOne. SearchQuery.one теперь возвращает TModel | null
+- Исправлен интерфейс ISearchQueryConfig.onGetOne. SearchQuery.one теперь возвращает TModel | null
 
 ## [3.2.4](https://github.com/steroids/nest/compare/3.2.3...3.2.4) (2025-07-01)
 
 ### Fixes
 
--  Фикс перегрузки метода DataMapper.create
+- Фикс перегрузки метода DataMapper.create
 
 ## [3.2.3](https://github.com/steroids/nest/compare/3.2.2...3.2.3) (2025-06-24)
 
 ### Features
 
--  Добавлена JSDoc документация ([#106](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/106))
--  EventEmitterModule по-умолчанию подключен в AppModule ([#122](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/122))
+- Добавлена JSDoc документация ([#106](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/106))
+- EventEmitterModule по-умолчанию подключен в AppModule ([#122](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/122))
 
 ## [3.2.2](https://github.com/steroids/nest/compare/3.2.1...3.2.2) (2025-05-13)
 
 ### Features
 
--   Добавлен GeometryField
+- Добавлен GeometryField
 
 ## [3.2.1](https://github.com/steroids/nest/compare/3.2.0...3.2.1) (2025-05-13)
 
 ### Bugfixes
 
--   Фикс поведения RelationField ([#14](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/14))
+- Фикс поведения RelationField ([#14](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/14))
 
 ## [3.2.0](https://github.com/steroids/nest/compare/3.1.0...3.2.0) (2025-05-12)
 
 ### Features
 
--   Из *Field декораторов вынесен код TypeORM ([#9](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/9))
--   В ReadService и CrudRepository добавлен метод isExistsById ([#89](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/89))
+- Из \*Field декораторов вынесен код TypeORM ([#9](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/9))
+- В ReadService и CrudRepository добавлен метод isExistsById ([#89](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/89))
 
 ## [3.1.0](https://github.com/steroids/nest/compare/3.0.3...3.1.0) (2025-03-13)
 
 ### Features
 
--   Добавлена поддержка кастомных валидаторов для класса ([#65](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/65))
--   В Swagger добавлена возможность аутентификации по JWT ([#96](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/96))
+- Добавлена поддержка кастомных валидаторов для класса ([#65](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/65))
+- В Swagger добавлена возможность аутентификации по JWT ([#96](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/96))
 
 ## [3.0.3](https://github.com/steroids/nest/compare/3.0.2...3.0.3) (2025-02-28)
 
@@ -206,20 +234,20 @@
 
 ### Bugfixes
 
--   Рефакторинг процесса сохранения модели ([#99](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/99))
+- Рефакторинг процесса сохранения модели ([#99](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/99))
 
 ## [3.0.2](https://github.com/steroids/nest/compare/3.0.1...3.0.2) (2025-02-19)
 
 ### Bugfixes
 
--   Комментарии теперь не вырезаются из исходного кода ([#98](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/98))
+- Комментарии теперь не вырезаются из исходного кода ([#98](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/98))
 
 ## [3.0.1](https://github.com/steroids/nest/compare/3.0.0...3.0.1) (2025-02-18)
 
 ### Bugfixes
 
--   Исправлен тип saveDto, передаваемой в методы create, update и save сервиса CrudService ([#46](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/46))
--   Исправлен тип, возвращаемый методом CrudService.create в случае, когда в него передан класс схемы ([#80](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/80))
+- Исправлен тип saveDto, передаваемой в методы create, update и save сервиса CrudService ([#46](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/46))
+- Исправлен тип, возвращаемый методом CrudService.create в случае, когда в него передан класс схемы ([#80](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/80))
 
 ## [3.0.0](https://github.com/steroids/nest/compare/2.2.1...3.0.0) (2025-02-18)
 
@@ -227,12 +255,12 @@
 
 ### Features
 
--   Добавлена Min Max валидация для DecimalNumberField ([#47](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/47))
--   Для сохранения модели в CrudService теперь используется diffModel (модель, содержащая только обновленные поля) ([#45](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/45))
--   Метод ModuleHelper.provide отмечен как deprecated ([#37](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/37))
+- Добавлена Min Max валидация для DecimalNumberField ([#47](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/47))
+- Для сохранения модели в CrudService теперь используется diffModel (модель, содержащая только обновленные поля) ([#45](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/45))
+- Метод ModuleHelper.provide отмечен как deprecated ([#37](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/37))
 
 ### Bugfixes
 
--   Исправлено наследование мета-классов (классы, использующие *Field декораторы для описания полей) ([#6](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/6))
--   В Table классах репозитория имплементация интерфейса IDeepPartial заменена на наследование от соответствующих моделей ([#44](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/44))
--   Добавлен .eslintrc файл ([#87](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/87))
+- Исправлено наследование мета-классов (классы, использующие \*Field декораторы для описания полей) ([#6](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/6))
+- В Table классах репозитория имплементация интерфейса IDeepPartial заменена на наследование от соответствующих моделей ([#44](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/44))
+- Добавлен .eslintrc файл ([#87](https://gitlab.kozhindev.com/steroids/steroids-nest/-/issues/87))

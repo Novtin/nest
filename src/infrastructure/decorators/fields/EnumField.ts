@@ -1,10 +1,11 @@
 import {applyDecorators} from '@nestjs/common';
 import {IsEnum} from 'class-validator';
 import {ApiProperty} from '@nestjs/swagger';
-import {BaseField, IBaseFieldOptions} from './BaseField';
+import {BaseField, IArrayFieldOptions, IBaseFieldOptions} from './BaseField';
 import BaseEnum from '../../../domain/base/BaseEnum';
+import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
-export interface IEnumFieldOptions extends IBaseFieldOptions {
+export interface IEnumFieldOptions extends IBaseFieldOptions, IArrayFieldOptions {
     enum: object | string[] | any,
     enumName?: string;
     isEnumConstraintMessage?: string,
@@ -55,6 +56,7 @@ export function EnumField(options: IEnumFieldOptions) {
             appType: 'enum',
             swaggerType: 'string',
         }),
+        ...getArrayValidators(options),
         ApiProperty({
             enum: getOpenApiEnum(options.enum),
             enumName: options.enumName,

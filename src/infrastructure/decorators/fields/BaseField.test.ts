@@ -1,11 +1,28 @@
 import {describe, expect, it} from '@jest/globals';
 import {DECORATORS} from '@nestjs/swagger/dist/constants';
-import {FileField, IntegerField, RelationField, RelationIdField, StringField} from './index';
+import {
+    DateField,
+    DateTimeField,
+    DecimalField,
+    DecimalNumberField,
+    EnumField,
+    FileField,
+    IntegerField,
+    RelationField,
+    RelationIdField,
+    StringField,
+    TextField,
+} from './index';
 import {ValidationHelper} from '../../../usecases/helpers/ValidationHelper';
 import {ValidationException} from '../../../usecases/exceptions';
 import {IErrorsCompositeObject} from '../../../usecases/interfaces/IErrorsCompositeObject';
 import {DataMapper} from '../../../usecases/helpers/DataMapper';
 import {getFieldOptions} from './BaseField';
+import {TRANSFORM_TYPE_FROM_DB, TRANSFORM_TYPE_TO_DB} from '../Transform';
+import typeOrmDateField from '../typeorm/fields/TypeOrmDateField';
+import typeOrmDateTimeField from '../typeorm/fields/TypeOrmDateTimeField';
+import typeOrmTextField from '../typeorm/fields/TypeOrmTextField';
+import {getMetadataArgsStorage} from '@steroidsjs/typeorm';
 
 class ApiPropertiesDto {
     @StringField({
@@ -14,6 +31,9 @@ class ApiPropertiesDto {
         isArray: true,
     })
     value: string[];
+
+    @StringField()
+    optionalValue?: string;
 }
 
 class RequiredNullableDto {
@@ -47,10 +67,26 @@ class ArrayOptionsDto {
     @RelationIdField({
         isArray: true,
         nullable: false,
-        arrayMinLength: 1,
-        arrayMaxLength: 2,
+        arrayOptions: {
+            notEmpty: true,
+            notEmptyConstraintMessage: 'Выберите хотя бы одну связь',
+            minLength: 1,
+            maxLength: {
+                value: 2,
+                constraintMessage: 'Можно выбрать не более двух связей',
+            },
+        },
     })
     requiredRelationIds?: number[];
+
+    @RelationIdField({
+        isArray: true,
+        nullable: false,
+        arrayOptions: {
+            notEmpty: true,
+        },
+    })
+    legacyNotEmptyRelationIds?: number[];
 }
 
 class RelationTargetDto {
@@ -81,6 +117,101 @@ class FileOptionsDto {
     fileIds?: number[];
 }
 
+class StringNotEmptyDto {
+    @StringField({
+        nullable: true,
+        notEmpty: true,
+    })
+    value?: string;
+
+    @StringField({
+        notEmpty: true,
+        notEmptyConstraintMessage: 'Строка должна быть заполнена',
+    })
+    valueWithCustomMessage?: string;
+
+    @TextField({
+        nullable: true,
+        notEmpty: true,
+    })
+    text?: string;
+
+    @TextField({
+        notEmpty: true,
+        notEmptyConstraintMessage: 'Текст должен быть заполнен',
+    })
+    textWithCustomMessage?: string;
+}
+
+class SupportedArrayFieldsDto {
+    @StringField({isArray: true})
+    strings?: string[];
+
+    @TextField({isArray: true})
+    texts?: string[];
+
+    @IntegerField({isArray: true})
+    integers?: number[];
+
+    @DateField({isArray: true})
+    dates?: string[];
+
+    @DateTimeField({isArray: true})
+    dateTimes?: string[];
+
+    @DecimalField({isArray: true})
+    decimals?: string[];
+
+    @DecimalNumberField({isArray: true})
+    decimalNumbers?: number[];
+
+    @EnumField({
+        enum: ['first', 'second'],
+        isArray: true,
+    })
+    enums?: string[];
+
+    @FileField({isArray: true})
+    files?: number[];
+
+    @RelationIdField({isArray: true})
+    relationIds?: number[];
+
+    @RelationField({
+        type: 'ManyToMany',
+        isOwningSide: true,
+        relationClass: () => RelationTargetDto,
+    })
+    relations?: RelationTargetDto[];
+}
+
+class TransformFieldsDto {
+    @DateField()
+    date?: string;
+
+    @DateField({isArray: true})
+    dates?: string[];
+
+    @DateTimeField({isArray: true})
+    dateTimes?: string[];
+
+    @DecimalNumberField()
+    decimalNumber?: number;
+
+    @DecimalNumberField({isArray: true})
+    decimalNumbers?: number[];
+}
+
+class CustomArrayTransformDto {
+    @StringField({
+        isArray: true,
+        transform: ({value}) => value.map(item => item.toUpperCase()),
+    })
+    values?: string[];
+}
+
+class TypeOrmArrayFieldsDto {}
+
 const getApiPropertyMeta = (TargetClass, propertyName: string) => Reflect.getMetadata(
     DECORATORS.API_MODEL_PROPERTIES,
     TargetClass.prototype,
@@ -102,10 +233,13 @@ const getValidationErrors = async (object: object): Promise<IErrorsCompositeObje
 describe('BaseField decorator', () => {
     it('sets required, nullable and isArray api properties', () => {
         const fieldApiPropertyMeta = getApiPropertyMeta(ApiPropertiesDto, 'value');
+        const optionalFieldApiPropertyMeta = getApiPropertyMeta(ApiPropertiesDto, 'optionalValue');
 
         expect(fieldApiPropertyMeta.required).toBe(true);
         expect(fieldApiPropertyMeta.nullable).toBe(true);
         expect(fieldApiPropertyMeta.isArray).toBe(true);
+        expect(optionalFieldApiPropertyMeta.required).toBe(false);
+        expect(optionalFieldApiPropertyMeta.nullable).toBe(false);
     });
 
     it('validates required and nullable combinations', async () => {
@@ -147,7 +281,9 @@ describe('BaseField decorator', () => {
         }))) || {}).not.toHaveProperty('ids');
         expect(await getValidationErrors(DataMapper.create(ArrayOptionsDto, {
             requiredRelationIds: [],
-        }))).toHaveProperty('requiredRelationIds');
+        }))).toMatchObject({
+            requiredRelationIds: expect.arrayContaining(['Выберите хотя бы одну связь']),
+        });
         expect((await getValidationErrors(DataMapper.create(ArrayOptionsDto, {
             requiredRelationIds: [1],
         }))) || {}).not.toHaveProperty('requiredRelationIds');
@@ -156,7 +292,120 @@ describe('BaseField decorator', () => {
         }))) || {}).not.toHaveProperty('requiredRelationIds');
         expect(await getValidationErrors(DataMapper.create(ArrayOptionsDto, {
             requiredRelationIds: [1, 2, 3],
-        }))).toHaveProperty('requiredRelationIds');
+        }))).toMatchObject({
+            requiredRelationIds: expect.arrayContaining(['Можно выбрать не более двух связей']),
+        });
+        expect(await getValidationErrors(DataMapper.create(ArrayOptionsDto, {
+            legacyNotEmptyRelationIds: [],
+        }))).toMatchObject({
+            legacyNotEmptyRelationIds: expect.arrayContaining(['Массив не должен быть пустым']),
+        });
+
+        const relationIdsApiPropertyMeta = getApiPropertyMeta(ArrayOptionsDto, 'requiredRelationIds');
+        expect(relationIdsApiPropertyMeta.minItems).toBe(1);
+        expect(relationIdsApiPropertyMeta.maxItems).toBe(2);
+    });
+
+    it('validates string and text notEmpty independently from required and nullable', async () => {
+        expect((await getValidationErrors(DataMapper.create(StringNotEmptyDto, {}))) || {}).not.toHaveProperty('value');
+        const nullErrors = await getValidationErrors(DataMapper.create(StringNotEmptyDto, {
+            value: null,
+            text: null,
+        }));
+        expect(nullErrors || {}).not.toHaveProperty('value');
+        expect(nullErrors || {}).not.toHaveProperty('text');
+        expect(await getValidationErrors(DataMapper.create(StringNotEmptyDto, {
+            value: '',
+            text: '',
+        }))).toHaveProperty('value');
+        expect(await getValidationErrors(DataMapper.create(StringNotEmptyDto, {
+            valueWithCustomMessage: '',
+        }))).toMatchObject({
+            valueWithCustomMessage: expect.arrayContaining(['Строка должна быть заполнена']),
+        });
+        expect(await getValidationErrors(DataMapper.create(StringNotEmptyDto, {
+            textWithCustomMessage: '',
+        }))).toMatchObject({
+            textWithCustomMessage: expect.arrayContaining(['Текст должен быть заполнен']),
+        });
+    });
+
+    it('applies array validators to supported field decorators', async () => {
+        const dto = Object.assign(new SupportedArrayFieldsDto(), {
+            strings: 'first',
+            texts: 'first',
+            integers: 1,
+            dates: '2026-08-26',
+            dateTimes: '2026-08-26 12:30:00',
+            decimals: '1.25',
+            decimalNumbers: 1.25,
+            enums: 'first',
+            files: 1,
+            relationIds: 1,
+            relations: {title: 'First'},
+        });
+        const errors = await getValidationErrors(dto);
+
+        expect(errors).toEqual(expect.objectContaining({
+            strings: expect.anything(),
+            texts: expect.anything(),
+            integers: expect.anything(),
+            dates: expect.anything(),
+            dateTimes: expect.anything(),
+            decimals: expect.anything(),
+            decimalNumbers: expect.anything(),
+            enums: expect.anything(),
+            files: expect.anything(),
+            relationIds: expect.anything(),
+            relations: expect.anything(),
+        }));
+    });
+
+    it('transforms scalar and array field values from database', () => {
+        const dto = DataMapper.create(TransformFieldsDto, {
+            date: '2026-08-26T12:30:00.000Z',
+            dates: ['2026-08-26T12:30:00.000Z', '2026-08-27T12:30:00.000Z'],
+            dateTimes: ['2026-08-26T12:30:00.000Z', '2026-08-27T12:30:00.000Z'],
+            decimalNumber: '1.25',
+            decimalNumbers: ['1.25', '2.5'],
+        } as any, TRANSFORM_TYPE_FROM_DB);
+
+        expect(dto.date).toBe('2026-08-26');
+        expect(dto.dates).toEqual(['2026-08-26', '2026-08-27']);
+        expect(dto.dateTimes).toEqual(['2026-08-26 19:30:00', '2026-08-27 19:30:00']);
+        expect(dto.decimalNumber).toBe(1.25);
+        expect(dto.decimalNumbers).toEqual([1.25, 2.5]);
+    });
+
+    it('transforms scalar and array date field values to database', () => {
+        const dto = DataMapper.create(TransformFieldsDto, {
+            date: '2026-08-26T12:30:00.000Z',
+            dates: ['2026-08-26T12:30:00.000Z', '2026-08-27T12:30:00.000Z'],
+        }, TRANSFORM_TYPE_TO_DB);
+
+        expect(dto.date).toBe('2026-08-26');
+        expect(dto.dates).toEqual(['2026-08-26', '2026-08-27']);
+    });
+
+    it('passes the whole array to a custom field transform', () => {
+        const dto = DataMapper.create(CustomArrayTransformDto, {
+            values: ['first', 'second'],
+        });
+
+        expect(dto.values).toEqual(['FIRST', 'SECOND']);
+    });
+
+    it('persists text and date fields as TypeORM arrays', () => {
+        typeOrmTextField({isArray: true}).forEach(decorator => decorator(TypeOrmArrayFieldsDto.prototype, 'texts'));
+        typeOrmDateField({isArray: true}).forEach(decorator => decorator(TypeOrmArrayFieldsDto.prototype, 'dates'));
+        typeOrmDateTimeField({isArray: true}).forEach(decorator => decorator(TypeOrmArrayFieldsDto.prototype, 'dateTimes'));
+
+        const columns = getMetadataArgsStorage().columns
+            .filter(column => column.target === TypeOrmArrayFieldsDto);
+
+        expect(columns.find(column => column.propertyName === 'texts')?.options.array).toBe(true);
+        expect(columns.find(column => column.propertyName === 'dates')?.options.array).toBe(true);
+        expect(columns.find(column => column.propertyName === 'dateTimes')?.options.array).toBe(true);
     });
 
     it('applies base options to relation fields', async () => {

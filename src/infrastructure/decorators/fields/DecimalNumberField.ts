@@ -3,10 +3,13 @@ import {Max, Min, ValidateBy, ValidationOptions, buildMessage, isDecimal} from '
 
 import {IDecimalFieldOptions} from './DecimalField';
 import {BaseField} from './BaseField';
-import {TRANSFORM_TYPE_FROM_DB, Transform} from '../Transform';
+import {TRANSFORM_TYPE_FROM_DB, Transform, transformValueOrArray} from '../Transform';
 import {DEFAULT_DECIMAL_SCALE} from '../../base/consts';
+import {getArrayValidators} from './helpers/InternalFieldMetadataHelpers';
 
 export const IS_DECIMAL_NUMBER = 'isDecimalNumber';
+
+const normalizeDecimalNumber = value => value ? Number(value) : value;
 
 export function isDecimalNumber(value: unknown, options?: IDecimalFieldOptions): boolean {
     if (typeof value !== 'number') { return false; }
@@ -43,8 +46,10 @@ export function DecimalNumberField(options: IDecimalFieldOptions = {}) {
             appType: 'decimal',
             swaggerType: 'number',
         }),
-        Transform(({value}) => value ? Number(value) : value, TRANSFORM_TYPE_FROM_DB),
+        ...getArrayValidators(options),
+        Transform(({value}) => transformValueOrArray(value, normalizeDecimalNumber), TRANSFORM_TYPE_FROM_DB),
         IsDecimalNumber(options, {
+            each: options.isArray,
             message: options.isDecimalConstraintMessage || 'Должно быть числом',
         }),
         typeof options.min === 'number' && Min(options.min, {

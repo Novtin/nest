@@ -1,7 +1,7 @@
-import {ArrayMaxSize, ArrayMinSize, IsArray, IsDefined, IsOptional, isString, NotEquals, ValidateIf} from 'class-validator';
+import {ArrayMaxSize, ArrayMinSize, ArrayNotEmpty, IsArray, IsDefined, IsOptional, isString, NotEquals, ValidateIf} from 'class-validator';
 import type {ApiPropertyOptions} from '@nestjs/swagger';
 import type {IAllFieldOptions} from '../index';
-import type {IBaseFieldOptions} from '../BaseField';
+import type {IArrayFieldOptions, IBaseFieldOptions, IConstraintOption} from '../BaseField';
 
 export const STEROIDS_META_FIELD_OPTIONS = 'steroids_meta_field_options';
 export const STEROIDS_META_FIELD_INTERNAL_OPTIONS = 'steroids_meta_field_internal_options';
@@ -154,14 +154,64 @@ export const getRequiredNullableValidators = ({required, nullable}: IBaseFieldOp
     })],
 ].flat().filter(Boolean);
 
-export const getArrayValidators = (options: IBaseFieldOptions) => [
-    options.isArray && IsArray({
-        message: options.isArrayConstraintMessage || 'Значение должно быть массивом',
-    }),
-    typeof options.arrayMinLength === 'number' && ArrayMinSize(options.arrayMinLength, {
-        message: options.arrayMinLengthConstraintMessage || `Массив должен содержать не менее ${options.arrayMinLength} элементов`,
-    }),
-    typeof options.arrayMaxLength === 'number' && ArrayMaxSize(options.arrayMaxLength, {
-        message: options.arrayMaxLengthConstraintMessage || `Массив должен содержать не более ${options.arrayMaxLength} элементов`,
-    }),
-].filter(Boolean);
+export const getConstraintValue = <T>(option?: IConstraintOption<T>): T | undefined => (
+    option && typeof option === 'object' && 'value' in option
+        ? option.value
+        : option as T | undefined
+);
+
+export const getConstraintMessage = <T>(option?: IConstraintOption<T>): string | undefined => (
+    option && typeof option === 'object' && 'constraintMessage' in option
+        ? option.constraintMessage
+        : undefined
+);
+
+export const getArrayApiPropertyOptions = (options: Partial<IArrayFieldOptions>): ApiPropertyOptions => {
+    if (!options.isArray) {
+        return {
+            isArray: options.isArray,
+        };
+    }
+
+    const minLength = getConstraintValue(options.arrayOptions?.minLength);
+    const maxLength = getConstraintValue(options.arrayOptions?.maxLength);
+    const notEmpty = options.arrayOptions?.notEmpty;
+    const minItems = notEmpty
+        ? Math.max(1, minLength ?? 0)
+        : minLength;
+
+    return {
+        isArray: true,
+        minItems,
+        maxItems: maxLength,
+    };
+};
+
+export const getArrayValidators = (
+    options: IArrayFieldOptions,
+) => {
+    if (!options.isArray) {
+        return [];
+    }
+
+    const minLength = getConstraintValue(options.arrayOptions?.minLength);
+    const maxLength = getConstraintValue(options.arrayOptions?.maxLength);
+    const notEmpty = options.arrayOptions?.notEmpty;
+
+    return [
+        IsArray({
+            message: options.isArrayConstraintMessage || 'Значение должно быть массивом',
+        }),
+        notEmpty && ArrayNotEmpty({
+            message: options.arrayOptions?.notEmptyConstraintMessage || 'Массив не должен быть пустым',
+        }),
+        typeof minLength === 'number' && ArrayMinSize(minLength, {
+            message: getConstraintMessage(options.arrayOptions?.minLength)
+                || `Массив должен содержать не менее ${minLength} элементов`,
+        }),
+        typeof maxLength === 'number' && ArrayMaxSize(maxLength, {
+            message: getConstraintMessage(options.arrayOptions?.maxLength)
+                || `Массив должен содержать не более ${maxLength} элементов`,
+        }),
+    ].filter(Boolean);
+};

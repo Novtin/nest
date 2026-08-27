@@ -2,41 +2,102 @@
 
 ## [Unreleased](../CHANGELOG.md#unreleased)
 
-### Обработка `required`, `nullable` и `isArray` в Field-декораторах
+### Изменения Field-декораторов
 
-Базовая обработка `required`, `nullable` и `isArray` перенесена в `BaseField`.
+**Для удобства перехода на эту версию была создана [cli-команда]()**
 
-Логика `required` и `nullable`:
-- `nullable` отвечает за возможность передать `null` в OpenAPI и валидации.
-- `required` отвечает за обязательность поля в OpenAPI и валидации.
+Ниже перечислены только действия, которые могут понадобиться проекту для сохранения поведения
 
-| Options                                                  | Поведение                                              |
-|----------------------------------------------------------|--------------------------------------------------------|
-| `required: true, nullable: true`                         | `undefined` не проходит валидацию, `null` допускается  |
-| `required: true, nullable: false`                        | `undefined` и `null` не проходят валидацию             |
-| `required: false, nullable: true`                        | `undefined` и `null` пропускаются                      |
-| `required: false, nullable: false` или options не заданы | `undefined` пропускается, `null` не проходит валидацию |
+#### Общие options: `required` и `nullable`
 
+Раньше Swagger считал поле обязательным, если было передано `nullable: false`, даже без `required: true`. После обновления обязательность в Swagger определяется только `required`.
 
-Теперь для всех полей `isArray: true` включает проверку, что значение является массивом.
-Сообщение ошибки для этой проверки задается через `isArrayConstraintMessage`.
+Если прежний OpenAPI-контракт должен остаться обязательным, укажите обе опции явно:
 
-Для ограничения количества элементов массива используйте `arrayMinLength` и `arrayMaxLength`.
-Например, `arrayMinLength: 1` запрещает пустой массив.
-Сообщения ошибок для этих проверок задаются через `arrayMinLengthConstraintMessage` и `arrayMaxLengthConstraintMessage`.
+```ts
+@StringField({
+    required: true,
+    nullable: false,
+})
+title: string;
+```
 
-Что нужно проверить в проекте:
-- Поля, которые должны принимать `null`: добавить `nullable: true`, если эта опция не была указана явно.
-- Обязательные поля: добавить `required: true`, если поле должно быть обязательным в валидации и OpenAPI.
-- Массивы, которые не должны быть пустыми: добавить `arrayMinLength: 1`.
-- `IntegerField` с `isArray: true` и `RelationIdField`, где `nullable: true` раньше допускал пустой массив `[]`: проверить, нужно ли теперь явно разрешать пустой массив или запретить его через `arrayMinLength: 1`.
-- `FileField` и `ImageField`: заменить `multiple: true` на `isArray: true`.
+`required: true` больше не является проверкой на непустую строку. Для `StringField` и `TextField`, где раньше пустая строка не допускалась, добавьте `notEmpty: true`.
+
+#### BooleanField
+
+При `required: false` поле раньше принимало `null` и `undefined` без `nullable: true`. Для сохранения этого поведения укажите `nullable: true`.
+
+#### StringField
+
+При `required: false` поле раньше принимало `null` и `undefined` без `nullable: true`. Для сохранения этого поведения укажите `nullable: true`.
+
+Если используется `required: true` и пустая строка должна остаться недопустимой, добавьте `notEmpty: true`.
+
+#### TextField
+
+При `required: false` поле раньше принимало `null` и `undefined` без `nullable: true`. Для сохранения этого поведения укажите `nullable: true`.
+
+Если используется `required: true` и пустая строка должна остаться недопустимой, добавьте `notEmpty: true`.
+
+#### JSONBField
+
+При `required: false` поле раньше принимало `null` и `undefined` без `nullable: true`. Для сохранения этого поведения укажите `nullable: true`.
+
+#### UpdateTimeField
+
+При `required: false` поле раньше принимало `null` и `undefined` без `nullable: true`. Для сохранения этого поведения укажите `nullable: true`.
+
+#### IntegerField
+
+При `nullable: true` поле раньше принимало пустой массив `[]`. Это поведение сохраняется, пока в `arrayOptions` не указан `notEmpty: true`.
+
+#### RelationField
+
+Если связь раньше могла принимать `null`, укажите `nullable: true` явно.
+
+#### RelationIdField
+
+Раньше `isArray: true` вместе с `nullable: false` автоматически запрещал пустой массив. Чтобы сохранить это поведение, добавьте `arrayOptions.notEmpty`.
+Если для этой проверки использовался `isFieldValidConstraintMessage`, перенесите его значение в `arrayOptions.notEmptyConstraintMessage`:
+
+```ts
+@RelationIdField({
+    isArray: true,
+    nullable: false,
+    arrayOptions: {
+        notEmpty: true,
+        notEmptyConstraintMessage: 'Не должно быть пустым',
+    },
+})
+relationIds: number[];
+```
+
+#### FileField
+
+Замените `multiple: true` на `isArray: true`.
+
+#### ImageField
+
+Замените `multiple: true` на `isArray: true`.
+
+#### Поля с `isArray`
+
+У `StringField`, `TextField`, `IntegerField`, `DateField`, `DateTimeField`, `DecimalField`, `DecimalNumberField`, `EnumField`, `FileField`, `ImageField`, `JSONBField` и `RelationIdField` `isArray: true` теперь проверяет, что значение действительно является массивом.
+
+Если проект валидирует DTO напрямую и раньше намеренно принимал скаляр при `isArray: true`, нормализуйте входное значение в массив до валидации либо используйте проектный декоратор без `IsArray`.
+
+#### Поля без поддержки `isArray`
+
+`BooleanField`, `EmailField`, `PasswordField`, `PhoneField`, `TimeField`, `HtmlField`, `GeometryField`, `CoordinateField`, `UidField` и `PrimaryKeyField` больше не принимают `isArray` в публичных options.
+
+Если массив в таком поле действительно нужен, создайте проектный декоратор с `IsArray`, валидаторами элементов с `each: true` и необходимой TypeORM-настройкой. Иначе удалите `isArray`.
 
 ## [4.4.0](../CHANGELOG.md#440-2026-05-14) (2026-05-14)
 
 ### Добавление `RestApplication.initCookieParser`
 
-Если в проекте был переопределен метод `RestApplication.init`, 
+Если в проекте был переопределен метод `RestApplication.init`,
 то в нём после создания приложения нужно вызвать метод `this.initCookieParser`.
 Для подписи кук можно передать в конфиг приложения поле `cookieSecret`.
 
@@ -155,34 +216,40 @@ sentry: {
 Чтобы перейти с `@ntegral/nestjs-sentry` на `@sentry/nestjs` нужно:
 
 1. Удалить библиотеки:
+
 - `@ntegral/nestjs-sentry`
 - `@sentry/node`
 
 2. Установить библиотеки:
+
 - `@sentry/nestjs`
 
-3. Заменить на импорт из библиотеки `@sentry/nestjs` в местах, где использовалось 
-```ts 
-import * as Sentry from '@sentry/node'
-``` 
+3. Заменить на импорт из библиотеки `@sentry/nestjs` в местах, где использовалось
+
+```ts
+import * as Sentry from "@sentry/node";
+```
 
 4. Если был переопределёны методы `init`, `initFilters` или `initSentry` класса `RestApplication`, то:
+
 - перенести инициализацию `SentryExceptionFilter` из `initSentry` в `initFilters`
 - удалить метод `initSentry` или вызвать в нём `super.initSentry`
 - метод `initSentry` вызвать в `init` до создания NestJS-приложения, но после метода `initConfig`, если уже не вызван `super.init`
 
 5. Если в импортах `AppModule` был переопределён `SentryModule` из базового конфига, то:
+
 - настройки `SentryModule` из `@ntegral/nestjs-sentry` перенести в `Sentry.init` внутри метода `initSentry` класса `RestApplication` (он наследуется от `BaseApplication`)
 - использовать `SentryModule.forRoot()` из `@sentry/nestjs/setup`
 
 ### Требования к паролю
 
 Если вы используете в проекте `@PasswordField`, то сейчас в нём проверяется сложность пароля. По умолчанию настройки такие:
+
 - Минимальная длина: 8
 - Минимальное количество букв в нижнем регистре: 1
 - Минимальное количество букв в верхнем регистре: 1
 - Минимальное количество цифр: 1
-- Минимальное количество специальных символов (```-#!$@£%^&*()_+|~=`{}\[\]:";'<>?,.\/\\ ```): 0
+- Минимальное количество специальных символов (`` -#!$@£%^&*()_+|~=`{}\[\]:";'<>?,.\/\\  ``): 0
 
 Если эти настройки не соответствуют требованиям проекта, то нужно передать в `@PasswordField` корректные параметры
 
@@ -191,7 +258,7 @@ import * as Sentry from '@sentry/node'
 ### обновление до NestJS 10
 
 В проекте необходимо обновить NestJS и связанные с ним зависимости до 10 версий.
-Также нужно обновить все "@steroidsjs/* зависимости до версий, указанных в примере, или новее.
+Также нужно обновить все "@steroidsjs/\* зависимости до версий, указанных в примере, или новее.
 Пример с версиями на момент написания этого MigrationGuide:
 
 ```json
@@ -216,34 +283,36 @@ import * as Sentry from '@sentry/node'
 }
 ```
 
-Если в проекте используется CacheModule из ```@nestjs/common```, необходимо заменить его на реализацию из отдельного пакета
-```@nestjs/cache-manager```
+Если в проекте используется CacheModule из `@nestjs/common`, необходимо заменить его на реализацию из отдельного пакета
+`@nestjs/cache-manager`
 
 ## [3.2.0](../CHANGELOG.md#320-2025-05-12) (2025-05-12)
 
-### Вынос инфраструктурной логики ORM из *Fields декораторов
+### Вынос инфраструктурной логики ORM из \*Fields декораторов
 
-Теперь *Fields декораторы не включают в себя код TypeORM.
-Необходимые декораторы из TypeORM применяет новый декоратор ```TypeOrmTableFromModel```
-В проекте необходимо заменить использование ```TableFromModel``` на ```TypeOrmTableFromModel```
+Теперь \*Fields декораторы не включают в себя код TypeORM.
+Необходимые декораторы из TypeORM применяет новый декоратор `TypeOrmTableFromModel`
+В проекте необходимо заменить использование `TableFromModel` на `TypeOrmTableFromModel`
 
 До
-```ts
-import {IDeepPartial} from '@steroidsjs/nest/usecases/interfaces/IDeepPartial';
-import {TableFromModel} from '@steroidsjs/nest/infrastructure/decorators/TableFromModel';
-import {AuthConfirmModel} from '@steroidsjs/nest-auth/domain/models/AuthConfirmModel';
 
-@TableFromModel(AuthConfirmModel, 'auth_confirm')
+```ts
+import { IDeepPartial } from "@steroidsjs/nest/usecases/interfaces/IDeepPartial";
+import { TableFromModel } from "@steroidsjs/nest/infrastructure/decorators/TableFromModel";
+import { AuthConfirmModel } from "@steroidsjs/nest-auth/domain/models/AuthConfirmModel";
+
+@TableFromModel(AuthConfirmModel, "auth_confirm")
 export class AuthConfirmTable implements IDeepPartial<AuthConfirmModel> {}
 ```
 
 После
-```ts
-import {IDeepPartial} from '@steroidsjs/nest/usecases/interfaces/IDeepPartial';
-import {TypeOrmTableFromModel} from '@steroidsjs/nest/infrastructure/decorators/typeorm/TypeOrmTableFromModel';
-import {AuthConfirmModel} from '@steroidsjs/nest-auth/domain/models/AuthConfirmModel';
 
-@TypeOrmTableFromModel(AuthConfirmModel, 'auth_confirm')
+```ts
+import { IDeepPartial } from "@steroidsjs/nest/usecases/interfaces/IDeepPartial";
+import { TypeOrmTableFromModel } from "@steroidsjs/nest/infrastructure/decorators/typeorm/TypeOrmTableFromModel";
+import { AuthConfirmModel } from "@steroidsjs/nest-auth/domain/models/AuthConfirmModel";
+
+@TypeOrmTableFromModel(AuthConfirmModel, "auth_confirm")
 export class AuthConfirmTable implements IDeepPartial<AuthConfirmModel> {}
 ```
 
@@ -255,6 +324,7 @@ export class AuthConfirmTable implements IDeepPartial<AuthConfirmModel> {}
 Если в проекте используется переопределение метода saveInternal в CrudService, необходимо обновить их следующим образом:
 
 До
+
 ```ts
 async saveInternal(prevModel: StoreModel | null, nextModel: StoreModel, context?: ContextDto) {
     await this.repository.save(nextModel);
@@ -262,6 +332,7 @@ async saveInternal(prevModel: StoreModel | null, nextModel: StoreModel, context?
 ```
 
 После
+
 ```ts
 async saveInternal(prevModel: StoreModel | null, nextModel: StoreModel, diffModel: StoreModel, context?: ContextDto) {
     return this.repository.save(diffModel);
@@ -271,6 +342,7 @@ async saveInternal(prevModel: StoreModel | null, nextModel: StoreModel, diffMode
 Также, если в проекте используется переопределение метода saveInternal в CrudRepository, необходимо обновить их следующим образом:
 
 До
+
 ```ts
 async saveInternal(manager: ISaveManager, nextModel: TModel) {
     await manager.save(nextModel);
@@ -278,6 +350,7 @@ async saveInternal(manager: ISaveManager, nextModel: TModel) {
 ```
 
 После
+
 ```ts
 async saveInternal(manager: ISaveManager, nextModel: TModel) {
     return manager.save(nextModel);
@@ -292,6 +365,7 @@ async saveInternal(manager: ISaveManager, nextModel: TModel) {
 и передавать его в save метод репозитория. Пример:
 
 До
+
 ```ts
 async saveInternal(prevModel: StoreModel | null, nextModel: StoreModel, context?: ContextDto) {
     await this.repository.save(nextModel);
@@ -299,6 +373,7 @@ async saveInternal(prevModel: StoreModel | null, nextModel: StoreModel, context?
 ```
 
 После
+
 ```ts
 async saveInternal(prevModel: StoreModel | null, nextModel: StoreModel, diffModel: StoreModel, context?: ContextDto) {
     await this.repository.save(diffModel);
@@ -311,60 +386,56 @@ async saveInternal(prevModel: StoreModel | null, nextModel: StoreModel, diffMode
 провайдеров в модуль. Пример:
 
 До
+
 ```ts
 @Module({
-    module: () => ({
-        providers: [
-            ModuleHelper.provide(SyncMessageService, [
-                ISyncMessageRepository,
-            ]),
-        ],
-    }),
+  module: () => ({
+    providers: [
+      ModuleHelper.provide(SyncMessageService, [ISyncMessageRepository]),
+    ],
+  }),
 })
-export class SyncModule {
-}
+export class SyncModule {}
 
 class SyncMessageService {
-    constructor(
-       private readonly syncMessageRepository: ISyncMessageRepository,
-    ) {}
+  constructor(private readonly syncMessageRepository: ISyncMessageRepository) {}
 }
 ```
 
 После
+
 ```ts
 @Module({
-    module: () => ({
-        providers: [
-            SyncMessageService
-        ],
-    }),
+  module: () => ({
+    providers: [SyncMessageService],
+  }),
 })
-export class SyncModule {
-}
+export class SyncModule {}
 
 @Injectable()
 class SyncMessageService {
-    constructor(
-        @Inject(ISyncMessageRepository)
-        private readonly syncMessageRepository: ISyncMessageRepository,
-    ) {}
+  constructor(
+    @Inject(ISyncMessageRepository)
+    private readonly syncMessageRepository: ISyncMessageRepository
+  ) {}
 }
 ```
 
-### Типизация *Table классов
+### Типизация \*Table классов
 
 Для корректной типизации *Table классов рекомендуется заменить использование интерфейса IDeepPartial на наследование *Table
 класса от класса соответствующей модели. Пример:
 
 До
+
 ```ts
-@TableFromModel(SyncMessageModel, 'sync_message')
+@TableFromModel(SyncMessageModel, "sync_message")
 export class SyncMessageTable implements IDeepPartial<SyncMessageModel> {}
 ```
 
 После
+
 ```ts
-@TableFromModel(SyncMessageModel, 'sync_message')
+@TableFromModel(SyncMessageModel, "sync_message")
 export class SyncMessageTable extends SyncMessageModel {}
 ```
