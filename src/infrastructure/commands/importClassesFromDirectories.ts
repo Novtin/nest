@@ -30,16 +30,24 @@ class MockMigration {
     }
 }
 
-const createMockMigration = file => {
+const createMockMigration = (file: string) => {
     const matches = /([0-9]+)-([a-zA-Z0-9]+)+.(ts|js)$/.exec(file);
     const name = matches ? matches[2] + matches[1] : 'MockMigration';
 
-    // eslint-disable-next-line no-new-func
-    const NewClass = new Function('return function ' + name + '(){ this.name = "' + name + '"; this.file = "' + file + '" }')();
-    NewClass.prototype = Object.create(MockMigration.prototype);
+    const NewClass = class extends MockMigration {
+        constructor() {
+            super();
+            this.name = name;
+            this.file = file;
+        }
+    };
+
+    Object.defineProperty(NewClass, 'name', {
+        value: name,
+    });
 
     return NewClass;
-}
+};
 
 /**
  * Loads all exported classes from the given directory.
