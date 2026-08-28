@@ -6,7 +6,7 @@ export type ISearchQueryOrderDirection = 'asc' | 'desc';
 export type ISearchQueryOrderField<TModel> = LiteralUnion<ModelFieldPath<TModel>>;
 
 /** Order directions keyed by runtime-resolved query aliases. Returned by `getOrderBy`. */
-export type ISearchQueryResolvedOrder = Record<string, ISearchQueryOrderDirection>;
+export type ISearchQueryOrder = Record<string, ISearchQueryOrderDirection>;
 
 /** Object form accepted by `orderBy` and `addOrderBy`. */
 export type ISearchQueryOrderObject<TModel> = Partial<Record<

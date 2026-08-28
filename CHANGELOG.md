@@ -5,7 +5,7 @@
 [Migration guide](docs/MigrationGuide.md#Unreleased)
 
 ### Features
-- Добавлена типизация для методов `SearchQuery`: IDE подсказывает поля модели и dot-path до глубины равной 5 ([#134](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/134)).
+- Добавлена типизация аргументов `SearchQuery`: IDE подсказывает поля модели для `select` и `excludeSelect`, а также пути полей и связей для `where`, `orderBy` и `with`. Ранее допустимые строковые значения продолжают поддерживаться ([#134](https://gitlab.kozhindev.com/steroids/steroids-nest/-/work_items/134)).
 
 ## [5.2.0](https://github.com/steroids/nest/compare/5.1.0...5.2.0) (2026-08-14)
 

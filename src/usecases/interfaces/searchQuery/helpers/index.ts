@@ -4,7 +4,7 @@ export type PreviousDepth = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 export type Unpacked<TValue> = TValue extends Array<infer TItem> ? NonNullable<TItem> : NonNullable<TValue>;
 export type IsNestedValue<TValue> = Unpacked<TValue> extends Primitive | Date | Function | Buffer ? false : true;
 
-/** Type-safe model field paths. */
+/** Union of model field names and nested paths, for example `customer.address.city`. */
 export type ModelFieldPath<TModel, TDepth extends number = 5> =
     [TDepth] extends [0]
         ? never
@@ -22,7 +22,7 @@ export type IsRelationValue<TValue> =
         ? false
         : 'id' extends keyof Unpacked<TValue> ? true : false;
 
-/** Type-safe model relation paths. */
+/** Union of relation field names and nested relation paths, for example `customer.profile`. */
 export type ModelRelationPath<TModel, TDepth extends number = 5> =
     [TDepth] extends [0]
         ? never

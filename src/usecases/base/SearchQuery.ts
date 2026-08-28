@@ -4,14 +4,14 @@ import {getSchemaSelectOptions} from '../../infrastructure/decorators/schema/Sch
 import {getMetaRelations} from '../../infrastructure/decorators/fields/BaseField';
 import {wrapInDoubleQuotes} from '../utils/wrapInDoubleQuotes';
 import {ISearchQuerySelect} from '../interfaces/searchQuery/ISearchQuerySelect';
-import {ISearchQueryResolvedOrder, ISearchQueryOrderObject, ISearchQueryOrderField, ISearchQueryOrderValue} from '../interfaces/searchQuery/ISearchQueryOrder';
+import {ISearchQueryOrder, ISearchQueryOrderObject, ISearchQueryOrderField, ISearchQueryOrderValue} from '../interfaces/searchQuery/ISearchQueryOrder';
 import {ISearchQueryRelationOptions, ISearchQueryWithValue} from '../interfaces/searchQuery/ISearchQueryWith';
 import {ISearchQueryWhere} from '../interfaces/searchQuery/ISearchQueryWhere';
 
 export const DEFAULT_ALIAS = 'model';
 
 export type {
-    ISearchQueryResolvedOrder,
+    ISearchQueryOrder,
     ISearchQueryOrderObject,
     ISearchQueryOrderDirection,
     ISearchQueryOrderField,
@@ -55,7 +55,7 @@ export default class SearchQuery<TModel> {
 
     protected _condition?: ISearchQueryWhere<TModel>;
 
-    protected _orders?: ISearchQueryResolvedOrder;
+    protected _orders?: ISearchQueryOrder;
 
     protected _limit?: number;
 
@@ -318,7 +318,7 @@ export default class SearchQuery<TModel> {
     private resolveOrderByFieldPaths(
         orderValue: ISearchQueryOrderValue<TModel>,
         direction: 'asc' | 'desc',
-    ): ISearchQueryResolvedOrder {
+    ): ISearchQueryOrder {
         if (typeof orderValue === 'string') {
             return {
                 [this.resolveOrderByFieldPath(orderValue)]: direction,
