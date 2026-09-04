@@ -178,12 +178,12 @@ export class CrudRepository<TModel> implements ICrudRepository<TModel>, OnModule
 
     async save(
         model: TModel,
-        transactionHandler?: TransactionHandler<TModel | DeepPartial<TModel>>,
+        transactionHandler?: TransactionHandler<TModel>,
     ): Promise<TModel>
 
     async save(
         model: DeepPartial<TModel>,
-        transactionHandler?: TransactionHandler<TModel | DeepPartial<TModel>>,
+        transactionHandler?: TransactionHandler<DeepPartial<TModel>>,
     ): Promise<DeepPartial<TModel>>
 
     /**
@@ -193,7 +193,7 @@ export class CrudRepository<TModel> implements ICrudRepository<TModel>, OnModule
      */
     async save(
         model: TModel | DeepPartial<TModel>,
-        transactionHandler?: TransactionHandler<TModel | DeepPartial<TModel>>,
+        transactionHandler?: TransactionHandler<any>,
     ): Promise<TModel | DeepPartial<TModel>> {
         const saver = async (
             manager: EntityManager,

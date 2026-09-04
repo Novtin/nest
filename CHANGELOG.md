@@ -2,8 +2,11 @@
 
 ## Unreleased
 
+### Changed
+- `CrudRepository.save`, `saveInternal` и `update` теперь принимают `DeepPartial<TModel>`; при частичном сохранении они возвращают `DeepPartial<TModel>`.
+
 ### Fixes
-- Уточнена типизация save-методов `CrudRepository`, а `CrudService.saveInternal` теперь возвращает полную модель после частичного сохранения.
+- `CrudService.saveInternal` после частичного обновления повторно загружает модель и возвращает её полный набор полей.
 
 ## [5.2.1](https://github.com/steroids/nest/compare/5.2.0...5.2.1) (2026-08-25)
 

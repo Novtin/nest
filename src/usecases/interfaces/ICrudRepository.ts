@@ -15,11 +15,11 @@ export interface ICrudRepository<TModel> {
     remove: (id: number, transactionHandler?: (callback) => Promise<void>) => Promise<void>,
     save(
         model: TModel,
-        transactionHandler?: TransactionHandler<TModel | DeepPartial<TModel>>,
+        transactionHandler?: TransactionHandler<TModel>,
     ): Promise<TModel>,
     save(
         model: DeepPartial<TModel>,
-        transactionHandler?: TransactionHandler<TModel | DeepPartial<TModel>>,
+        transactionHandler?: TransactionHandler<DeepPartial<TModel>>,
     ): Promise<DeepPartial<TModel>>,
     softRemove: (id: number, transactionHandler?: (callback: () => Promise<void>) => Promise<void>) => Promise<void>,
     update: (
