@@ -1,4 +1,4 @@
-import {DeepPartial} from '@steroidsjs/typeorm';
+import {DeepPartial} from 'typeorm';
 import {SearchResultDto} from '../dtos/SearchResultDto';
 import {SearchInputDto} from '../dtos/SearchInputDto';
 import SearchQuery, {ISearchQueryConfig} from '../base/SearchQuery';
