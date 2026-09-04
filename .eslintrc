@@ -11,9 +11,7 @@
         "no-case-declarations": "off",
         "@typescript-eslint/no-unused-vars": "off",
         "no-console": "off",
-        "import/no-dynamic-require": "off",
-        "no-dupe-class-members": "off",
-        "@typescript-eslint/no-dupe-class-members": "error"
+        "import/no-dynamic-require": "off"
     },
     "env": {
         "node": true
